@@ -1,0 +1,100 @@
+############################
+# Build e dependências
+############################
+bin/
+obj/
+Debug/
+Release/
+out/
+build/
+[Bb]uild[Ll]og.*
+
+############################
+# Entity Framework
+############################
+Migrations/
+migrations/
+
+############################
+# Usuário / IDE / Editor
+############################
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+############################
+# Logs / Cache / Backup
+############################
+*.log
+*.tlog
+*.cache
+*.tmp
+*.bak
+*.swp
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+############################
+# Arquivos de publicação
+############################
+publish/
+*.pubxml
+*.publish.xml
+
+############################
+# Arquivos do NuGet
+############################
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+*.nuspec
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+############################
+# Arquivos gerados
+############################
+Generated/
+Generated_Code/
+
+############################
+# Configurações locais
+############################
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+############################
+# Sistema operacional
+############################
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.nfs*
+
+############################
+# Outros
+############################
+node_modules/
+dist/
+coverage/

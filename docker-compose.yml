@@ -1,5 +1,22 @@
+version: "3.9"
 
 services:
+  servico_usuarios:
+    build:
+      context: ./servicoUsuarios
+      dockerfile: Dockerfile
+    container_name: servico_usuarios
+    ports:
+      - "5005:5005"
+    environment:
+      - CONNECTION_STRING=Server=SistemaDistribuido_db,1433;Database=UsuariosDB;User Id=sa;Password=SDClinica@123;TrustServerCertificate=True
+      - JWT_SECRET=TroquePorUmaChaveMuitoSecreta123!
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - consultas_net
+
   api:
     build:
       context: ./endpointsInterface
@@ -8,11 +25,17 @@ services:
     ports:
       - "8080:80"
     depends_on:
-        sqlserver:
-         condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+      servico_usuarios:
+        condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
+      - SERVICO_USUARIOS_HOST=servico_usuarios
+      - SERVICO_USUARIOS_PORT=5005
+    networks:
+      - consultas_net
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -22,9 +45,14 @@ services:
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
-    healthcheck:               
+    healthcheck:
       test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "SDClinica@123", "-Q", "SELECT 1", "-C"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - consultas_net
 
+networks:
+  consultas_net:
+    driver: bridge
