@@ -1,0 +1,30 @@
+
+services:
+  api:
+    build:
+      context: ./endpointsInterface
+      dockerfile: Dockerfile
+    container_name: interface_endpoints
+    ports:
+      - "8080:80"
+    depends_on:
+        sqlserver:
+         condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: SistemaDistribuido_db
+    environment:
+      SA_PASSWORD: "SDClinica@123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    healthcheck:               
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "SDClinica@123", "-Q", "SELECT 1", "-C"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
