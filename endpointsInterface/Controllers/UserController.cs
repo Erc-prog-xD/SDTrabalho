@@ -19,6 +19,45 @@ namespace EndpointsInterface.Controllers
 
         }
 
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            try
+            {
+                using TcpClient client = new TcpClient();
+                await client.ConnectAsync(_usuarioHost, _usuarioPort);
+
+                using NetworkStream stream = client.GetStream();
+
+                // Monta o envelope para o serviço de usuário
+                var envelope = new
+                {
+                    acao = "login",
+                    dados = request
+                };
+
+                string json = JsonSerializer.Serialize(envelope);
+                byte[] data = Encoding.UTF8.GetBytes(json);
+                await stream.WriteAsync(data, 0, data.Length);
+
+                // Recebe resposta
+                byte[] buffer = new byte[8192];
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                var response = JsonSerializer.Deserialize<UsuarioResponse>(responseJson);
+
+                if (response == null || !response.Sucesso)
+                    return Unauthorized(new { sucesso = false, mensagem = response?.Mensagem ?? "Erro no login." });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { sucesso = false, mensagem = $"Erro ao comunicar com o serviço de usuários: {ex.Message}" });
+            }
+        }
+
         [HttpPost("registro")]
         public async Task<IActionResult> Registrar([FromBody] UsuarioRegisterRequest request)
         {
@@ -55,6 +94,11 @@ namespace EndpointsInterface.Controllers
         }
     }
 
+    public class LoginRequest
+    {
+        public required string Cpf { get; set; }
+        public required string Senha { get; set; } 
+    }
     public class UsuarioRegisterRequest
     {
         public required string Cpf { get; set; }
