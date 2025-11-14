@@ -192,9 +192,6 @@ namespace ServicoUsuarios
         }
 
 
-
-
-
        private static async Task<UsuarioResponse> LoginUsuario(JsonElement dados, AppDbContext context, JwtConfig config)
         {
             try
@@ -254,9 +251,6 @@ namespace ServicoUsuarios
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
-
-
         // ============================================================
         // UTILITÁRIOS DE SENHA
         // ============================================================
@@ -273,8 +267,9 @@ namespace ServicoUsuarios
             var hashCalculado = hmac.ComputeHash(Encoding.UTF8.GetBytes(senha));
             return hashCalculado.SequenceEqual(hashArmazenado);
         }
+    
+    
     }
-
     // ============================================================
     // CLASSES DE SUPORTE
     // ============================================================
@@ -286,7 +281,6 @@ namespace ServicoUsuarios
         [JsonPropertyName("dados")]
         public JsonElement Dados { get; set; }
     }
-
     public class JwtConfig
     {
         public string Secret { get; set; } = string.Empty;
@@ -294,7 +288,6 @@ namespace ServicoUsuarios
         public string Audience { get; set; } = string.Empty;
         public int ExpiresInHours { get; set; }
     }
-
     public class UsuarioRegisterRequest
     {
         public string Cpf { get; set; } = string.Empty;
@@ -307,7 +300,6 @@ namespace ServicoUsuarios
         public string Cpf { get; set; } = string.Empty;
         public string Senha { get; set; } = string.Empty;
     }
-
     public class UsuarioResponse
     {
         public bool Sucesso { get; set; }
