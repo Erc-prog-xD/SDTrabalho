@@ -104,7 +104,7 @@ namespace ServicoUsuarios
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
                     );                   
 
-                    UsuarioResponse resposta;
+                    Response resposta;
 
                     switch (envelope?.Acao?.ToLower())
                     {
@@ -114,8 +114,11 @@ namespace ServicoUsuarios
                         case "login":
                             resposta = await LoginUsuario(envelope.Dados, context, jwtConfig);
                             break;
+                        case "atualizarpaciente":
+                            resposta = await AtualizarPaciente(envelope.Dados, context);
+                            break;
                         default:
-                            resposta = new UsuarioResponse
+                            resposta = new Response
                             {
                                 Sucesso = false,
                                 Mensagem = $"Ação '{envelope?.Acao}' não reconhecida."
@@ -139,19 +142,19 @@ namespace ServicoUsuarios
         // ============================================================
         // FUNÇÃO DE REGISTRO DE USUÁRIO
         // ============================================================
-        private static async Task<UsuarioResponse> RegistrarUsuario(JsonElement dados, AppDbContext context)
+        private static async Task<Response> RegistrarUsuario(JsonElement dados, AppDbContext context)
         {
             try
             {
                 var usuarioReq = JsonSerializer.Deserialize<UsuarioRegisterRequest>(dados);
 
                 if (usuarioReq == null)
-                    return new UsuarioResponse { Sucesso = false, Mensagem = "Dados inválidos no corpo da requisição." };
+                    return new Response { Sucesso = false, Mensagem = "Dados inválidos no corpo da requisição." };
 
                 // Verifica se já existe CPF cadastrado
                 if (await context.Users.AnyAsync(u => u.Cpf == usuarioReq.Cpf))
                 {
-                    return new UsuarioResponse
+                    return new Response
                     {
                         Sucesso = false,
                         Mensagem = "Usuário já cadastrado com esse CPF."
@@ -174,7 +177,7 @@ namespace ServicoUsuarios
                 await context.Users.AddAsync(novoUsuario);
                 await context.SaveChangesAsync();
 
-                return new UsuarioResponse
+                return new Response
                 {
                     Sucesso = true,
                     Mensagem = "Usuário registrado com sucesso!",
@@ -183,7 +186,7 @@ namespace ServicoUsuarios
             }
             catch (Exception ex)
             {
-                return new UsuarioResponse
+                return new Response
                 {
                     Sucesso = false,
                     Mensagem = $"Erro ao registrar usuário: {ex.Message}"
@@ -192,23 +195,23 @@ namespace ServicoUsuarios
         }
 
 
-       private static async Task<UsuarioResponse> LoginUsuario(JsonElement dados, AppDbContext context, JwtConfig config)
+        private static async Task<Response> LoginUsuario(JsonElement dados, AppDbContext context, JwtConfig config)
         {
             try
             {
                 var loginReq = JsonSerializer.Deserialize<LoginRequest>(dados);
 
                 if (loginReq == null)
-                    return new UsuarioResponse { Sucesso = false, Mensagem = "Dados inválidos no corpo da requisição." };
+                    return new Response { Sucesso = false, Mensagem = "Dados inválidos no corpo da requisição." };
 
                 var user = await context.Users.FirstOrDefaultAsync(u => u.Cpf == loginReq.Cpf);
 
                 if (user == null || !VerificarSenha(loginReq.Senha, user.PasswordHash, user.PasswordSalt))
-                    return new UsuarioResponse { Sucesso = false, Mensagem = "CPF ou senha inválidos." };
+                    return new Response { Sucesso = false, Mensagem = "CPF ou senha inválidos." };
 
                 var token = GerarJwt(user, config);
 
-                return new UsuarioResponse
+                return new Response
                 {
                     Sucesso = true,
                     Token = token,
@@ -217,7 +220,7 @@ namespace ServicoUsuarios
             }
             catch (Exception ex)
             {
-                return new UsuarioResponse
+                return new Response
                 {
                     Sucesso = false,
                     Mensagem = $"Erro ao realizar login: {ex.Message}"
@@ -225,6 +228,83 @@ namespace ServicoUsuarios
             }
         }
 
+        private static async Task<Response> AtualizarPaciente(JsonElement dados, AppDbContext context)
+        {
+            try
+            {
+                // Desserializa JSON enviado no socket
+                var req = JsonSerializer.Deserialize<PacienteUpdateEnvio>(dados);
+
+                if (req == null)
+                {
+                    return new Response
+                    {
+                        Sucesso = false,
+                        Mensagem = "Dados inválidos na requisição."
+                    };
+                }
+
+                // Verifica se o usuário existe
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == req.IdLogado);
+
+                if (user == null)
+                {
+                    return new Response
+                    {
+                        Sucesso = false,
+                        Mensagem = "Usuário informado não existe."
+                    };
+                }
+
+                // Verifica se já existe paciente vinculado ao usuário
+                var paciente = await context.Pacientes.FirstOrDefaultAsync(p => p.User.Id == user.Id);
+
+                if (paciente != null)
+                {
+                    // === Atualiza paciente existente ===
+                    paciente.Contato = req.Contato;
+                    paciente.DataNascimento = req.DataNascimento;
+                    paciente.HistoricoMedico = req.HistoricoMedico;
+
+                    context.Pacientes.Update(paciente);
+                    await context.SaveChangesAsync();
+
+                    return new Response
+                    {
+                        Sucesso = true,
+                        Mensagem = "Paciente atualizado com sucesso."
+                    };
+                }
+                else
+                {
+                    // === Cria novo paciente ===
+                    var novoPaciente = new Paciente
+                    {
+                        User = user,
+                        Contato = req.Contato,
+                        DataNascimento = req.DataNascimento,
+                        HistoricoMedico = req.HistoricoMedico
+                    };
+
+                    await context.Pacientes.AddAsync(novoPaciente);
+                    await context.SaveChangesAsync();
+
+                    return new Response
+                    {
+                        Sucesso = true,
+                        Mensagem = "Paciente cadastrado com sucesso."
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Response
+                {
+                    Sucesso = false,
+                    Mensagem = $"Erro ao atualizar paciente: {ex.Message}"
+                };
+            }
+        }
 
         private static string GerarJwt(User user, JwtConfig config)
         {
@@ -300,10 +380,17 @@ namespace ServicoUsuarios
         public string Cpf { get; set; } = string.Empty;
         public string Senha { get; set; } = string.Empty;
     }
-    public class UsuarioResponse
+    public class Response
     {
         public bool Sucesso { get; set; }
         public string Mensagem { get; set; } = string.Empty;
         public string? Token { get; set; }
     }
+    public class PacienteUpdateEnvio
+{
+    public required string IdLogado { get; set; }
+    public string? Contato { get; set; }
+    public DateTime DataNascimento { get; set; }
+    public string? HistoricoMedico { get; set; }
+}
 }
