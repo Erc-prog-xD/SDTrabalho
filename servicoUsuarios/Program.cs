@@ -117,6 +117,9 @@ namespace ServicoUsuarios
                         case "atualizarpaciente":
                             resposta = await AtualizarPaciente(envelope.Dados, context);
                             break;
+                        case "adicionarpaciente":
+                            resposta = await AdicionarPaciente(envelope.Dados, context);
+                            break;
                         default:
                             resposta = new Response
                             {
@@ -245,7 +248,7 @@ namespace ServicoUsuarios
                 }
 
                 // Verifica se o usuário existe
-                var user = await context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == req.IdLogado);
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == req.IdLogado && u.DeletionDate.ToString() == null);
 
                 if (user == null)
                 {
@@ -257,7 +260,7 @@ namespace ServicoUsuarios
                 }
 
                 // Verifica se já existe paciente vinculado ao usuário
-                var paciente = await context.Pacientes.FirstOrDefaultAsync(p => p.User.Id == user.Id);
+                var paciente = await context.Pacientes.FirstOrDefaultAsync(p => p.User.Id == user.Id && p.DeletionDate.ToString() == null);
 
                 if (paciente != null)
                 {
@@ -269,16 +272,72 @@ namespace ServicoUsuarios
                     context.Pacientes.Update(paciente);
                     await context.SaveChangesAsync();
 
+                }
+                else
+                {
+                    return new Response
+                    {
+                        Sucesso = false,
+                        Mensagem = "Paciente não existe."
+                    };
+                }
                     return new Response
                     {
                         Sucesso = true,
                         Mensagem = "Paciente atualizado com sucesso."
                     };
-                }
-                else
+            }
+            catch (Exception ex)
+            {
+                return new Response
                 {
-                    // === Cria novo paciente ===
-                    var novoPaciente = new Paciente
+                    Sucesso = false,
+                    Mensagem = $"Erro ao atualizar paciente: {ex.Message}"
+                };
+            }
+        }
+        private static async Task<Response> AdicionarPaciente(JsonElement dados, AppDbContext context)
+        {
+            try
+            {
+                // Desserializa JSON enviado no socket
+                var req = JsonSerializer.Deserialize<PacienteUpdateEnvio>(dados);
+
+                if (req == null)
+                {
+                    return new Response
+                    {
+                        Sucesso = false,
+                        Mensagem = "Dados inválidos na requisição."
+                    };
+                }
+
+                // Verifica se o usuário existe
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == req.IdLogado && u.DeletionDate.ToString() == null);
+
+                if (user == null)
+                {
+                    return new Response
+                    {
+                        Sucesso = false,
+                        Mensagem = "Usuário informado não existe."
+                    };
+                }
+
+                // Verifica se já existe paciente vinculado ao usuário
+                var paciente = await context.Pacientes.FirstOrDefaultAsync(p => p.User.Id == user.Id && p.DeletionDate.ToString() == null);
+
+                if(paciente != null)
+                {
+                     return new Response
+                    {
+                        Sucesso = false,
+                        Mensagem = "Paciente já existe."
+                    };
+                }
+             
+                // === Cria novo paciente ===
+                var novoPaciente = new Paciente
                     {
                         User = user,
                         Contato = req.Contato,
@@ -286,15 +345,14 @@ namespace ServicoUsuarios
                         HistoricoMedico = req.HistoricoMedico
                     };
 
-                    await context.Pacientes.AddAsync(novoPaciente);
-                    await context.SaveChangesAsync();
-
-                    return new Response
+                await context.Pacientes.AddAsync(novoPaciente);
+                await context.SaveChangesAsync();
+                
+                return new Response
                     {
                         Sucesso = true,
-                        Mensagem = "Paciente cadastrado com sucesso."
+                        Mensagem = "Paciente criado com sucesso."
                     };
-                }
             }
             catch (Exception ex)
             {

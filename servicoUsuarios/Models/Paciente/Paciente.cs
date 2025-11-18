@@ -8,5 +8,6 @@ public class Paciente
     public DateTime DataNascimento {get; set;}
     public string? HistoricoMedico {get; set;}
     public ICollection<PacienteConvenio>? Convenios { get; set; }
+    public DateTime? DeletionDate {get; set;} = null;
 
 }

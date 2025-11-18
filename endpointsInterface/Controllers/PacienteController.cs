@@ -29,7 +29,53 @@ namespace EndpointsInterface.Controllers
             return Ok(new { Mensagem = $"Perfil do paciente {cpf}" });
         }
 
-    
+
+
+        [HttpPost("cadastrarPerfil")]
+        public async Task<IActionResult> cadastrarPerfil([FromBody] PacienteUpdateRequest request)
+        {
+            try
+            {
+                var Id = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+                if (Id == null)
+                    return Unauthorized("Token inválido.");
+
+                var newRequest = new PacienteEnvio
+                {
+                    IdLogado = Id,
+                    Contato = request.Contato,
+                    DataNascimento = request.DataNascimento,
+                    HistoricoMedico = request.HistoricoMedico
+                };
+
+                using TcpClient client = new TcpClient();
+                await client.ConnectAsync(_usuarioHost, _usuarioPort);
+                using NetworkStream stream = client.GetStream();
+
+                var envelope = new
+                {
+                    acao = "adicionarpaciente",
+                    dados = newRequest
+                };
+
+                string json = JsonSerializer.Serialize(envelope);
+                byte[] data = Encoding.UTF8.GetBytes(json);
+                await stream.WriteAsync(data, 0, data.Length);
+
+                 // Aguarda resposta do serviço
+                byte[] buffer = new byte[8192];
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                var response = JsonSerializer.Deserialize<PacienteResponse>(responseJson);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { sucesso = false, mensagem = $"Erro ao comunicar com o serviço de usuários: {ex.Message}" });
+            }
+        }
+
         [HttpPut("atualizarPerfil")]
         public async Task<IActionResult> AtualizarPerfil([FromBody] PacienteUpdateRequest request)
         {
@@ -39,7 +85,7 @@ namespace EndpointsInterface.Controllers
                 if (Id == null)
                     return Unauthorized("Token inválido.");
 
-                var newRequest = new PacienteUpdateEnvio
+                var newRequest = new PacienteEnvio
                 {
                     IdLogado = Id,
                     Contato = request.Contato,
@@ -73,7 +119,6 @@ namespace EndpointsInterface.Controllers
             {
                 return StatusCode(500, new { sucesso = false, mensagem = $"Erro ao comunicar com o serviço de usuários: {ex.Message}" });
             }
-
         }
     }
 
@@ -84,7 +129,7 @@ namespace EndpointsInterface.Controllers
         public string? HistoricoMedico { get; set; }
         
     }
-    public class PacienteUpdateEnvio
+    public class PacienteEnvio
     {
         public required string IdLogado {get;set;}
         public string? Contato { get; set; }
