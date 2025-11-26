@@ -1,3 +1,5 @@
+using EndpointsInterface.DTO;
+using EndpointsInterface.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Sockets;
 using System.Text;
@@ -20,8 +22,8 @@ namespace EndpointsInterface.Controllers
         }
 
         
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
             try
             {
@@ -46,10 +48,10 @@ namespace EndpointsInterface.Controllers
                 int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                 string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-                var response = JsonSerializer.Deserialize<UsuarioResponse>(responseJson);
+                var response = JsonSerializer.Deserialize<Response<string>>(responseJson);
 
-                if (response == null || !response.Sucesso)
-                    return Unauthorized(new { sucesso = false, mensagem = response?.Mensagem ?? "Erro no login." });
+                if (response == null || !response.Status)
+                    return Unauthorized(new { sucesso = false, mensagem = response?.Mensage ?? "Erro no login." });
 
                 return Ok(response);
             }
@@ -59,8 +61,8 @@ namespace EndpointsInterface.Controllers
             }
         }
 
-        [HttpPost("registro")]
-        public async Task<IActionResult> Registrar([FromBody] UsuarioRegisterRequest request)
+        [HttpPost("Registrar")]
+        public async Task<IActionResult> Registrar([FromBody] UsuarioRegisterRequestDTO request)
         {
             try
             {
@@ -85,7 +87,7 @@ namespace EndpointsInterface.Controllers
                 int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                 string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-                var response = JsonSerializer.Deserialize<UsuarioResponse>(responseJson);
+                var response = JsonSerializer.Deserialize<Response<string>>(responseJson);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -95,24 +97,4 @@ namespace EndpointsInterface.Controllers
         }
     }
 
-    public class LoginRequest
-    {
-        public required string Cpf { get; set; }
-        public required string Senha { get; set; } 
-    }
-    public class UsuarioRegisterRequest
-    {
-        public required string Cpf { get; set; }
-        public required  string Nome { get; set; }
-        public required string Senha { get; set; } 
-        public required UsertypeEnum Role { get; set; }
-
-    }
-
-    public class UsuarioResponse
-    {
-        public bool Sucesso { get; set; }
-        public string Mensagem { get; set; } = string.Empty;
-        public string? Token { get; set; }
-    }
 }
