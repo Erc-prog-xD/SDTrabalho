@@ -3,6 +3,6 @@ using ServicoUsuarios.Models;
 
 public interface IAuthUsuarioService
 {
-    Task<Response<string>> Registrar(JsonElement dados);
-    Task<Response<string>> Login(JsonElement dados);
+    Task<Response<object>> Registrar(JsonElement dados);
+    Task<Response<object>> Login(JsonElement dados);
 }

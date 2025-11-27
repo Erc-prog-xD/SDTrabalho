@@ -2,16 +2,19 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using ServicoUsuarios.DTO.Pacientes;
 using ServicoUsuarios.Models;
 
 public class SocketServe
 {
     private readonly IAuthUsuarioService _authService;
+    private readonly IPacienteService _pacienteService;
     private readonly TcpListener _listener;
 
-    public SocketServe(IAuthUsuarioService authService)
+    public SocketServe(IAuthUsuarioService authService, IPacienteService pacienteService)
     {
         _authService = authService;
+        _pacienteService = pacienteService;
         _listener = new TcpListener(IPAddress.Any, 5005);
     }
 
@@ -42,24 +45,49 @@ public class SocketServe
         string acao = raiz.GetProperty("acao").GetString();
         JsonElement dados = raiz.GetProperty("dados");
 
-        Response<string> resp;
+        Response<object> resp;
 
-        if (acao == "registrar")
-            resp = await _authService.Registrar(dados);
-        else if (acao == "login")
-            resp = await _authService.Login(dados);
-        else
+        switch (acao.ToLower())
         {
-            resp = new Response<string>
-            {
-                Status = false,
-                Mensage = "Ação inválida!"
-            };
-        }
+            case "registrar":
+                resp = await _authService.Registrar(dados);
+                break;
 
+            case "login":
+                resp = await _authService.Login(dados);
+                break;
+
+            case "visualizarperfil":
+                resp = ConvertResponse(await _pacienteService.VisualizarPerfil(dados));
+                break;
+
+            case "atualizarpaciente":
+                resp = await _pacienteService.AtualizarPerfil(dados);
+                break;
+
+            default:
+                resp = new Response<object>
+                {
+                    Status = false,
+                    Mensage = "Ação inválida!",
+                    Dados = null
+                };
+                break;
+        }
         string respostaJson = JsonSerializer.Serialize(resp);
 
         byte[] respostaBytes = Encoding.UTF8.GetBytes(respostaJson);
         await stream.WriteAsync(respostaBytes);
     }
+
+    private Response<object> ConvertResponse<T>(Response<T> r)
+    {
+        return new Response<object>
+        {
+            Status = r.Status,
+            Mensage = r.Mensage,
+            Dados = r.Dados
+        };
+    }
 }
+

@@ -21,9 +21,9 @@ public class AuthUsuarioService : IAuthUsuarioService
     // ============================================================
     // REGISTRAR
     // ============================================================
-    public async Task<Response<string>> Registrar(JsonElement dados)
+    public async Task<Response<object>> Registrar(JsonElement dados)
     {
-        Response<string> response = new Response<string> { Mensage = "" };
+        Response<object> response = new Response<object> { Mensage = "" };
         try
         {
             var req = JsonSerializer.Deserialize<UsuarioRegisterRequestDTO>(dados);
@@ -120,9 +120,9 @@ public class AuthUsuarioService : IAuthUsuarioService
     // ============================================================
     // LOGIN
     // ============================================================
-    public async Task<Response<string>> Login(JsonElement dados)
+    public async Task<Response<object>> Login(JsonElement dados)
     {
-        Response<string> response = new Response<string> { Mensage = "" };
+        Response<object> response = new Response<object> { Mensage = "" };
 
         try
         {

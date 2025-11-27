@@ -28,7 +28,9 @@ var host = Host.CreateDefaultBuilder(args)
         services.Configure<JwtConfig>(configuration.GetSection("Jwt"));
 
         // Registrar serviços
+        
         services.AddScoped<IAuthUsuarioService, AuthUsuarioService>();
+        services.AddScoped<IPacienteService, PacienteService>();
         services.AddSingleton<SocketServe>();
     })
     .Build();

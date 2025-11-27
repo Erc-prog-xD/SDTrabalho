@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using EndpointsInterface.DTO.Pacientes;
+using EndpointsInterface.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace EndpointsInterface.Controllers
@@ -22,22 +23,15 @@ namespace EndpointsInterface.Controllers
         }
 
         [HttpGet("visualizarPerfil")]
-        public IActionResult VisualizarPerfil()
+        public async Task<IActionResult> VisualizarPerfil()
         {
-            // Aqui você poderia usar o Claim "cpf" ou "id" do token para buscar dados do paciente
-            var cpf = User.Claims.FirstOrDefault(c => c.Type == "cpf")?.Value;
-            return Ok(new { Mensagem = $"Perfil do paciente {cpf}" });
-        }
-
-        [HttpPut("atualizarPerfil")]
-        public async Task<IActionResult> AtualizarPerfil([FromBody] PacienteUpdateRequestDTO request)
-        {
-            try
+              try
             {
-                var Id = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-                if (Id == null)
+               var claimId = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+                if (claimId == null)
                     return Unauthorized("Token inválido.");
 
+                int idLogado = int.Parse(claimId);
 
                 using TcpClient client = new TcpClient();
                 await client.ConnectAsync(_usuarioHost, _usuarioPort);
@@ -45,8 +39,8 @@ namespace EndpointsInterface.Controllers
 
                 var envelope = new
                 {
-                    acao = "atualizarpaciente",
-                    dados = request
+                    acao = "visualizarperfil",
+                    dados = idLogado
                 };
 
                 string json = JsonSerializer.Serialize(envelope);
@@ -58,7 +52,57 @@ namespace EndpointsInterface.Controllers
                 int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                 string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-                var response = JsonSerializer.Deserialize<PacienteResponse>(responseJson);
+                var response = JsonSerializer.Deserialize<Response<PacienteDTO>>(responseJson);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { sucesso = false, mensagem = $"Erro ao comunicar com o serviço de usuários: {ex.Message}" });
+            }
+        }
+
+        [HttpPut("atualizarPerfil")]
+        public async Task<IActionResult> AtualizarPerfil([FromBody] PacienteUpdateRequestDTO request)
+        {
+            try
+            {
+                var claimId = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+                if (claimId == null)
+                    return Unauthorized("Token inválido.");
+
+                int idLogado = int.Parse(claimId);
+                
+                var envio = new  PacienteUpdateEnvioDTO{
+                    Id = idLogado,
+                    Nome = request.Nome,
+                    Email = request.Email,
+                    Telefone = request.Alergias,
+                    DataNascimento = request.DataNascimento,
+                    Endereco = request.Endereco,
+                    HistoricoMedico = request.HistoricoMedico,
+                    Alergias = request.Alergias
+                };
+
+                using TcpClient client = new TcpClient();
+                await client.ConnectAsync(_usuarioHost, _usuarioPort);
+                using NetworkStream stream = client.GetStream();
+
+                var envelope = new
+                {
+                    acao = "atualizarpaciente",
+                    dados = envio
+                };
+
+                string json = JsonSerializer.Serialize(envelope);
+                byte[] data = Encoding.UTF8.GetBytes(json);
+                await stream.WriteAsync(data, 0, data.Length);
+
+                 // Aguarda resposta do serviço
+                byte[] buffer = new byte[8192];
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                var response = JsonSerializer.Deserialize<Response<string>>(responseJson);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -68,18 +112,4 @@ namespace EndpointsInterface.Controllers
         }
     }
 
-    public class PacienteEnvio
-    {
-        public required string IdLogado {get;set;}
-        public string? Contato { get; set; }
-        public required DateTime DataNascimento { get; set; }
-        public string? HistoricoMedico { get; set; }
-        
-    }
-
-     public class PacienteResponse
-    {
-        public bool Sucesso { get; set; }
-        public string Mensagem { get; set; } = string.Empty;
-    }
 }
