@@ -28,7 +28,7 @@ public class PacienteService : IPacienteService
 
             var paciente = await _db.Users
                         .OfType<Paciente>()
-                        .FirstOrDefaultAsync(x => x.Id == req);
+                        .FirstOrDefaultAsync(x => x.Id == req && x.DeletionDate == null);
                 
             if (paciente == null)
             {
@@ -81,7 +81,7 @@ public class PacienteService : IPacienteService
             }
              var paciente = await _db.Users
             .OfType<Paciente>()
-            .FirstOrDefaultAsync(x => x.Id == req.Id);
+            .FirstOrDefaultAsync(x => x.Id == req.Id && x.DeletionDate == null);
 
             if (paciente == null)
             {
@@ -128,4 +128,45 @@ public class PacienteService : IPacienteService
 
         return response;
     }
+
+
+    public async Task<Response<object>> DeletarPerfil(JsonElement dados)
+    {
+        Response<object> response = new Response<object> { Mensage = "" };
+        try
+        {
+
+            var req = dados.GetInt32();
+
+
+            var paciente = await _db.Users
+                        .OfType<Paciente>()
+                        .FirstOrDefaultAsync(x => x.Id == req && x.DeletionDate == null);
+                
+            if (paciente == null)
+            {
+                response.Status = false;
+                response.Mensage = "Paciente não encontrado.";
+                return response;
+            }
+
+            paciente.DeletionDate = DateTime.Now;
+            
+            await _db.SaveChangesAsync();
+
+            response.Status = true;
+            response.Mensage = "Perfil deletado com sucesso";
+            response.Dados = null;
+                
+        }
+        catch (Exception ex)
+        {
+            response.Dados = null;
+            response.Status = false;
+            response.Mensage = ex.Message;
+        }
+
+        return response;
+    }
+
 }

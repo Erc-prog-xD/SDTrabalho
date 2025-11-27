@@ -8,7 +8,7 @@ public abstract class User
     public required byte[] PasswordHash { get; set; }
     public required byte[] PasswordSalt { get; set; }
     public required UsertypeEnum Role { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime? DeletionDate {get; set;} = null;
 
 }

@@ -6,5 +6,6 @@ public interface IPacienteService
 {
     Task<Response<PacienteResponseDTO>> VisualizarPerfil(JsonElement dados);
     Task<Response<object>> AtualizarPerfil(JsonElement dados);
+    Task<Response<object>> DeletarPerfil(JsonElement dados);
 
 }

@@ -9,7 +9,7 @@ namespace EndpointsInterface.Controllers
 {
     [ApiController]
     [Route("api/paciente")]
-    [Authorize(Roles = "Paciente,Admin")] // Apenas Paciente ou Admin
+    [Authorize(Roles = "Paciente")] // Apenas Paciente ou Admin
     public class PacienteController : ControllerBase
     {
        private readonly string _usuarioHost;
@@ -53,6 +53,44 @@ namespace EndpointsInterface.Controllers
                 string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
                 var response = JsonSerializer.Deserialize<Response<PacienteDTO>>(responseJson);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { sucesso = false, mensagem = $"Erro ao comunicar com o serviço de usuários: {ex.Message}" });
+            }
+        }
+        [HttpDelete("DeletarPerfil")]
+        public async Task<IActionResult> DeletarPerfil()
+        {
+              try
+            {
+               var claimId = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+                if (claimId == null)
+                    return Unauthorized("Token inválido.");
+
+                int idLogado = int.Parse(claimId);
+
+                using TcpClient client = new TcpClient();
+                await client.ConnectAsync(_usuarioHost, _usuarioPort);
+                using NetworkStream stream = client.GetStream();
+
+                var envelope = new
+                {
+                    acao = "deletarperfilpaciente",
+                    dados = idLogado
+                };
+
+                string json = JsonSerializer.Serialize(envelope);
+                byte[] data = Encoding.UTF8.GetBytes(json);
+                await stream.WriteAsync(data, 0, data.Length);
+
+                 // Aguarda resposta do serviço
+                byte[] buffer = new byte[8192];
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                var response = JsonSerializer.Deserialize<Response<string>>(responseJson);
                 return Ok(response);
             }
             catch (Exception ex)

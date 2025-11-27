@@ -60,7 +60,9 @@ public class SocketServe
             case "visualizarperfil":
                 resp = ConvertResponse(await _pacienteService.VisualizarPerfil(dados));
                 break;
-
+            case "deletarperfilpaciente":
+                resp = await _pacienteService.DeletarPerfil(dados);
+                break;
             case "atualizarpaciente":
                 resp = await _pacienteService.AtualizarPerfil(dados);
                 break;

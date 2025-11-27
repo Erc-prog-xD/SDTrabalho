@@ -134,12 +134,12 @@ public class AuthUsuarioService : IAuthUsuarioService
                 response.Mensage = "Dados inválidos.";
                 return response;
             }
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Cpf == req.Cpf);
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Cpf == req.Cpf && u.DeletionDate == null);
 
             if (user == null)
             {
                 response.Status = false;
-                response.Mensage = "CPF ou senha inválidos.";
+                response.Mensage = "Usuário não encontrando";
                 return response;
             }
             if (!VerificarSenha(req.Senha, user.PasswordHash, user.PasswordSalt))
