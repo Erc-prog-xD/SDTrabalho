@@ -1,29 +1,30 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using EndpointsInterface.DTO.Pacientes;
+using EndpointsInterface.DTO.Medico;
+using EndpointsInterface.DTO.Medicos;
 using EndpointsInterface.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace EndpointsInterface.Controllers
 {
     [ApiController]
-    [Route("api/paciente")]
-    [Authorize(Roles = "Paciente")] // Apenas Paciente ou Admin
-    public class PacienteController : ControllerBase
+    [Route("api/Medico")]
+    [Authorize(Roles = "Medico")] // Apenas Paciente ou Admin
+    public class MedicoController : ControllerBase
     {
        private readonly string _usuarioHost;
         private readonly int _usuarioPort;
 
-        public PacienteController(IConfiguration config)
+        public MedicoController(IConfiguration config)
         {
             _usuarioHost = config["SERVICO_USUARIOS_HOST"] ?? "localhost";
             _usuarioPort = int.Parse(config["SERVICO_USUARIOS_PORT"] ?? "5005");
 
         }
 
-        [HttpGet("VisualizarPerfilPaciente")]
-        public async Task<IActionResult> VisualizarPerfilPaciente()
+        [HttpGet("VisualizarPerfilMedico")]
+        public async Task<IActionResult> VisualizarPerfilMedico()
         {
               try
             {
@@ -39,7 +40,7 @@ namespace EndpointsInterface.Controllers
 
                 var envelope = new
                 {
-                    acao = "visualizarperfilpaciente",
+                    acao = "visualizarperfilmedico",
                     dados = idLogado
                 };
 
@@ -52,7 +53,7 @@ namespace EndpointsInterface.Controllers
                 int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                 string responseJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-                var response = JsonSerializer.Deserialize<Response<PacienteDTO>>(responseJson);
+                var response = JsonSerializer.Deserialize<Response<MedicoDTO>>(responseJson);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -60,8 +61,8 @@ namespace EndpointsInterface.Controllers
                 return StatusCode(500, new { sucesso = false, mensagem = $"Erro ao comunicar com o serviço de usuários: {ex.Message}" });
             }
         }
-        [HttpDelete("DeletarPerfilPaciente")]
-        public async Task<IActionResult> DeletarPerfilPaciente()
+        [HttpDelete("DeletarPerfilMedico")]
+        public async Task<IActionResult> DeletarPerfilMedico()
         {
               try
             {
@@ -77,7 +78,7 @@ namespace EndpointsInterface.Controllers
 
                 var envelope = new
                 {
-                    acao = "deletarperfilpaciente",
+                    acao = "deletarperfilmedico",
                     dados = idLogado
                 };
 
@@ -99,8 +100,8 @@ namespace EndpointsInterface.Controllers
             }
         }
 
-        [HttpPut("AtualizarPerfilPaciente")]
-        public async Task<IActionResult> AtualizarPerfilPaciente([FromBody] PacienteUpdateRequestDTO request)
+        [HttpPut("AtualizarPerfilMedico")]
+        public async Task<IActionResult> AtualizarPerfilMedico([FromBody] MedicoUpdateRequestDTO request)
         {
             try
             {
@@ -110,15 +111,14 @@ namespace EndpointsInterface.Controllers
 
                 int idLogado = int.Parse(claimId);
                 
-                var envio = new  PacienteUpdateEnvioDTO{
+                var envio = new  MedicoUpdateEnvioDTO{
                     Id = idLogado,
                     Nome = request.Nome,
                     Email = request.Email,
                     Telefone = request.Telefone,
-                    DataNascimento = request.DataNascimento,
-                    Endereco = request.Endereco,
-                    HistoricoMedico = request.HistoricoMedico,
-                    Alergias = request.Alergias
+                    CRM = request.CRM,
+                    Especialidade = request.Especialidade
+                    
                 };
 
                 using TcpClient client = new TcpClient();
@@ -127,7 +127,7 @@ namespace EndpointsInterface.Controllers
 
                 var envelope = new
                 {
-                    acao = "atualizarpaciente",
+                    acao = "atualizarmedico",
                     dados = envio
                 };
 

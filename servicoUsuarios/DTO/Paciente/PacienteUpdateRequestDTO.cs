@@ -1,4 +1,4 @@
-namespace ServicoUsuarios.DTO.Pacientes
+namespace ServicoUsuarios.DTO.Paciente
 {
     public class PacienteUpdateRequestDTO
     {

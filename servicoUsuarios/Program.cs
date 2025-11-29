@@ -31,6 +31,8 @@ var host = Host.CreateDefaultBuilder(args)
         
         services.AddScoped<IAuthUsuarioService, AuthUsuarioService>();
         services.AddScoped<IPacienteService, PacienteService>();
+        services.AddScoped<IRecepcionistaService, RecepcionistaService>();
+        services.AddScoped<IMedicoService, MedicoService>();
         services.AddSingleton<SocketServe>();
     })
     .Build();

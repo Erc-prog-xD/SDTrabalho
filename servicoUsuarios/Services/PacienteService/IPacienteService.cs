@@ -1,11 +1,12 @@
 using System.Text.Json;
-using ServicoUsuarios.DTO.Pacientes;
+
+using ServicoUsuarios.DTO.Paciente;
 using ServicoUsuarios.Models;
 
 public interface IPacienteService
 {
-    Task<Response<PacienteResponseDTO>> VisualizarPerfil(JsonElement dados);
-    Task<Response<object>> AtualizarPerfil(JsonElement dados);
-    Task<Response<object>> DeletarPerfil(JsonElement dados);
+    Task<Response<PacienteResponseDTO>> VisualizarPerfilPaciente(JsonElement dados);
+    Task<Response<object>> AtualizarPerfilPaciente(JsonElement dados);
+    Task<Response<object>> DeletarPerfilPaciente(JsonElement dados);
 
 }

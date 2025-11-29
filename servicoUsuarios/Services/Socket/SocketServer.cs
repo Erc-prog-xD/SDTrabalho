@@ -2,19 +2,24 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using ServicoUsuarios.DTO.Pacientes;
+using ServicoUsuarios.DTO.Paciente;
 using ServicoUsuarios.Models;
 
 public class SocketServe
 {
     private readonly IAuthUsuarioService _authService;
     private readonly IPacienteService _pacienteService;
+
+    private readonly IRecepcionistaService _recepcionistaService;
+    private readonly IMedicoService _medicoService;
     private readonly TcpListener _listener;
 
-    public SocketServe(IAuthUsuarioService authService, IPacienteService pacienteService)
+    public SocketServe(IAuthUsuarioService authService, IPacienteService pacienteService, IMedicoService medicoService, IRecepcionistaService recepcionistaService)
     {
         _authService = authService;
+        _medicoService = medicoService;
         _pacienteService = pacienteService;
+        _recepcionistaService = recepcionistaService;
         _listener = new TcpListener(IPAddress.Any, 5005);
     }
 
@@ -57,14 +62,34 @@ public class SocketServe
                 resp = await _authService.Login(dados);
                 break;
 
-            case "visualizarperfil":
-                resp = ConvertResponse(await _pacienteService.VisualizarPerfil(dados));
+            case "visualizarperfilpaciente":
+                resp = ConvertResponse(await _pacienteService.VisualizarPerfilPaciente(dados));
                 break;
             case "deletarperfilpaciente":
-                resp = await _pacienteService.DeletarPerfil(dados);
+                resp = await _pacienteService.DeletarPerfilPaciente(dados);
                 break;
             case "atualizarpaciente":
-                resp = await _pacienteService.AtualizarPerfil(dados);
+                resp = await _pacienteService.AtualizarPerfilPaciente(dados);
+                break;
+
+            case "visualizarperfilmedico":
+                resp = ConvertResponse(await _medicoService.VisualizarPerfilMedico(dados));
+                break;
+            case "deletarperfilmedico":
+                resp = await _medicoService.DeletarPerfilMedico(dados);
+                break;
+            case "atualizarmedico":
+                resp = await _medicoService.AtualizarPerfilMedico(dados);
+                break;
+
+            case "visualizarperfilrecepcionista":
+                resp = ConvertResponse(await _recepcionistaService.VisualizarPerfilRecepcionista(dados));
+                break;
+            case "deletarperfilrecepcionista":
+                resp = await _recepcionistaService.DeletarPerfilRecepcionista(dados);
+                break;
+            case "atualizarrecepcionista":
+                resp = await _recepcionistaService.AtualizarPerfilRecepcionista(dados);
                 break;
 
             default:

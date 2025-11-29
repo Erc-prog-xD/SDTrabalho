@@ -1,5 +1,5 @@
 ﻿
-namespace servicoUsuarios.DTO
+namespace ServicoUsuarios.DTO.Paciente
 {
     internal class IdPacienteDTO
     {

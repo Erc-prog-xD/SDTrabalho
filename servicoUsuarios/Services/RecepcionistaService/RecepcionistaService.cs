@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using ServicoUsuarios.Data;
-using ServicoUsuarios.DTO.Paciente;
+using ServicoUsuarios.DTO.Recepcionista;
 using ServicoUsuarios.Models;
 using System.Text.Json;
 
-public class PacienteService : IPacienteService
+public class RecepcionistaService : IRecepcionistaService
 {
     private readonly AppDbContext _db;
 
-    public PacienteService(AppDbContext db)
+    public RecepcionistaService(AppDbContext db)
     {
         _db = db;
     }
@@ -16,38 +16,35 @@ public class PacienteService : IPacienteService
     // ============================================================
     // REGISTRAR
     // ============================================================
-    public async Task<Response<PacienteResponseDTO>> VisualizarPerfilPaciente(JsonElement dados)
+    public async Task<Response<RecepcionistaResponseDTO>> VisualizarPerfilRecepcionista(JsonElement dados)
     {
-        Response<PacienteResponseDTO> response = new Response<PacienteResponseDTO> { Mensage = "" };
+        Response<RecepcionistaResponseDTO> response = new Response<RecepcionistaResponseDTO> { Mensage = "" };
         try
         {
 
             var req = dados.GetInt32();
 
 
-            var paciente = await _db.Users
-                        .OfType<Paciente>()
+            var recepcionista = await _db.Users
+                        .OfType<Recepcionista>()
                         .FirstOrDefaultAsync(x => x.Id == req && x.DeletionDate == null);
                 
-            if (paciente == null)
+            if (recepcionista == null)
             {
                 response.Status = false;
-                response.Mensage = "Paciente não encontrado.";
+                response.Mensage = "Recepcionista não encontrado.";
                 return response;
             }
 
-            var dto = new PacienteResponseDTO
+            var dto = new RecepcionistaResponseDTO
             {
-                Id = paciente.Id,
-                Cpf = paciente.Cpf,
-                Nome = paciente.Nome,
-                Email = paciente.Email,
-                Telefone = paciente.Telefone,
-                Role = paciente.Role,
-                DataNascimento = paciente.DataNascimento,
-                Endereco = paciente.Endereco,
-                HistoricoMedico = paciente.HistoricoMedico,
-                Alergias = paciente.Alergias
+                Id = recepcionista.Id,
+                Cpf = recepcionista.Cpf,
+                Nome = recepcionista.Nome,
+                Email = recepcionista.Email,
+                Telefone = recepcionista.Telefone,
+                Role = recepcionista.Role,
+                Turno = recepcionista.Turno,
             };
 
             response.Status = true;
@@ -64,12 +61,12 @@ public class PacienteService : IPacienteService
 
         return response;
     }
-    public async Task<Response<object>> AtualizarPerfilPaciente(JsonElement dados)
+    public async Task<Response<object>> AtualizarPerfilRecepcionista(JsonElement dados)
     {
         Response<object> response = new Response<object> { Mensage = "" };
         try
         {
-            var req = JsonSerializer.Deserialize<PacienteUpdateRequestDTO>(dados);
+            var req = JsonSerializer.Deserialize<RecepcionistaUpdateRequestDTO>(dados);
 
             if (req == null)
             {   
@@ -78,39 +75,30 @@ public class PacienteService : IPacienteService
                 response.Dados = null;
                 return response;
             }
-             var paciente = await _db.Users
-            .OfType<Paciente>()
+             var recepcionista = await _db.Users
+            .OfType<Recepcionista>()
             .FirstOrDefaultAsync(x => x.Id == req.Id && x.DeletionDate == null);
 
-            if (paciente == null)
+            if (recepcionista == null)
             {
                 response.Status = false;
-                response.Mensage = "Paciente não encontrado.";
+                response.Mensage = "Recepcionista não encontrado.";
                 return response;
             }
 
             // Atualizar campos da classe base User
             if (!string.IsNullOrWhiteSpace(req.Nome))
-                paciente.Nome = req.Nome;
+                recepcionista.Nome = req.Nome;
 
             if (!string.IsNullOrWhiteSpace(req.Email))
-                paciente.Email = req.Email;
+                recepcionista.Email = req.Email;
 
             if (!string.IsNullOrWhiteSpace(req.Telefone))
-                paciente.Telefone = req.Telefone;
+                recepcionista.Telefone = req.Telefone;
 
-            // Atualizar campos da classe Paciente
-            if (req.DataNascimento != null)
-                paciente.DataNascimento = req.DataNascimento;
+            if (!string.IsNullOrWhiteSpace(req.Turno))
+                recepcionista.Turno = req.Turno;
 
-            if (!string.IsNullOrWhiteSpace(req.Endereco))
-                paciente.Endereco = req.Endereco;
-
-            if (!string.IsNullOrWhiteSpace(req.HistoricoMedico))
-                paciente.HistoricoMedico = req.HistoricoMedico;
-
-            if (!string.IsNullOrWhiteSpace(req.Alergias))
-                paciente.Alergias = req.Alergias;
 
             await _db.SaveChangesAsync();
 
@@ -129,7 +117,7 @@ public class PacienteService : IPacienteService
     }
 
 
-    public async Task<Response<object>> DeletarPerfilPaciente(JsonElement dados)
+    public async Task<Response<object>> DeletarPerfilRecepcionista(JsonElement dados)
     {
         Response<object> response = new Response<object> { Mensage = "" };
         try
@@ -138,18 +126,18 @@ public class PacienteService : IPacienteService
             var req = dados.GetInt32();
 
 
-            var paciente = await _db.Users
-                        .OfType<Paciente>()
+            var recepcionista = await _db.Users
+                        .OfType<Recepcionista>()
                         .FirstOrDefaultAsync(x => x.Id == req && x.DeletionDate == null);
                 
-            if (paciente == null)
+            if (recepcionista == null)
             {
                 response.Status = false;
-                response.Mensage = "Paciente não encontrado.";
+                response.Mensage = "Recepcionista não encontrado.";
                 return response;
             }
 
-            paciente.DeletionDate = DateTime.Now;
+            recepcionista.DeletionDate = DateTime.Now;
             
             await _db.SaveChangesAsync();
 
