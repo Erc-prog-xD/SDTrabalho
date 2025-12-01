@@ -16,6 +16,7 @@ namespace ServicoUsuarios.Data
                 .HasDiscriminator<UsertypeEnum>("Role")
                 .HasValue<Paciente>(UsertypeEnum.Paciente)
                 .HasValue<Medico>(UsertypeEnum.Medico)
+                .HasValue<Admin>(UsertypeEnum.Admin)
                 .HasValue<Recepcionista>(UsertypeEnum.Recepcionista);
         }
     }   

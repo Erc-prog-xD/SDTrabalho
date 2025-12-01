@@ -2,24 +2,25 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using ServicoUsuarios.DTO.Paciente;
 using ServicoUsuarios.Models;
 
 public class SocketServe
 {
     private readonly IAuthUsuarioService _authService;
     private readonly IPacienteService _pacienteService;
-
+    private readonly IAdminService _adminService;
     private readonly IRecepcionistaService _recepcionistaService;
     private readonly IMedicoService _medicoService;
     private readonly TcpListener _listener;
 
-    public SocketServe(IAuthUsuarioService authService, IPacienteService pacienteService, IMedicoService medicoService, IRecepcionistaService recepcionistaService)
+    public SocketServe(IAuthUsuarioService authService, IPacienteService pacienteService, IMedicoService medicoService, IRecepcionistaService recepcionistaService, IAdminService adminService)
     {
+
         _authService = authService;
         _medicoService = medicoService;
         _pacienteService = pacienteService;
         _recepcionistaService = recepcionistaService;
+        _adminService = adminService;
         _listener = new TcpListener(IPAddress.Any, 5005);
     }
 
@@ -90,6 +91,18 @@ public class SocketServe
                 break;
             case "atualizarrecepcionista":
                 resp = await _recepcionistaService.AtualizarPerfilRecepcionista(dados);
+                break;
+
+            case "visualizarperfiladmin":
+                resp = ConvertResponse(await _adminService.VisualizarPerfilAdmin(dados));
+                break;
+
+            case "deletarperfiladmin":
+                resp = await _adminService.DeletarPerfilAdmin(dados);
+                break;
+
+            case "atualizaradmin":
+                resp = await _adminService.AtualizarPerfilAdmin(dados);
                 break;
 
             default:
