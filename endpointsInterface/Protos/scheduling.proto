@@ -1,0 +1,54 @@
+﻿syntax = "proto3";
+
+package scheduling;
+
+option csharp_namespace = "Scheduling.Grpc"; // importante pro C#
+
+enum AppointmentStatus {
+  STATUS_UNKNOWN   = 0;
+  STATUS_SCHEDULED = 1;
+  STATUS_CONFIRMED = 2;
+  STATUS_CANCELLED = 3;
+  STATUS_COMPLETED = 4;
+}
+
+message Appointment {
+  string id           = 1;
+  string patient_id   = 2;
+  string doctor_id    = 3;
+  string specialty    = 4;
+  string datetime_iso = 5;
+  AppointmentStatus status = 6;
+}
+
+message CreateAppointmentRequest {
+  string patient_id   = 1;
+  string doctor_id    = 2;
+  string specialty    = 3;
+  string datetime_iso = 4;
+}
+message CreateAppointmentResponse {
+  Appointment appointment = 1;
+}
+
+message ListAppointmentsRequest {
+  string user_id  = 1;
+  bool is_doctor  = 2;
+}
+message ListAppointmentsResponse {
+  repeated Appointment appointments = 1;
+}
+
+message UpdateStatusRequest {
+  string appointment_id      = 1;
+  AppointmentStatus new_status = 2;
+}
+message UpdateStatusResponse {
+  Appointment appointment = 1;
+}
+
+service SchedulingService {
+  rpc CreateAppointment(CreateAppointmentRequest) returns (CreateAppointmentResponse);
+  rpc ListAppointments(ListAppointmentsRequest) returns (ListAppointmentsResponse);
+  rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+}
