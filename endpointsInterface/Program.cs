@@ -4,8 +4,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using Grpc.Net.ClientFactory;
+using Scheduling.Grpc;
+
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddGrpcClient<SchedulingService.SchedulingServiceClient>(o =>
+{
+    o.Address = new Uri("http://scheduling:9090");
+});
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSection["Secret"] ?? throw new Exception("Jwt:Secret não configurado!");

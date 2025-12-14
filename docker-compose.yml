@@ -1,22 +1,20 @@
-version: "3.9"
-
 services:
-  servico_usuarios:
-    build:
-      context: ./servicoUsuarios
-      dockerfile: Dockerfile
-    container_name: servico_usuarios
-    ports:
-      - "5005:5005"
-    environment:
-      - CONNECTION_STRING=Server=SistemaDistribuido_db,1433;Database=UsuariosDB;User Id=sa;Password=SDClinica@123;TrustServerCertificate=True
-      - JWT_SECRET=dGhpcy1pcy1hLXJhbmRvbS1qd3QtdG9rZW4tMzItYnl0ZXM=
-    depends_on:
-      sqlserver:
-        condition: service_healthy
-    networks:
-      - consultas_net
-
+  #servico_usuarios:
+  #  build:
+  #    context: ./servicoUsuarios
+  #    dockerfile: Dockerfile
+  #  container_name: servico_usuarios
+  #  ports:
+  #    - "5005:5005"
+  #  environment:
+  #    - CONNECTION_STRING=Server=SistemaDistribuido_db,1433;Database=UsuariosDB;User Id=sa;Password=SDClinica@123;TrustServerCertificate=True
+  #    - JWT_SECRET=dGhpcy1pcy1hLXJhbmRvbS1qd3QtdG9rZW4tMzItYnl0ZXM=
+  #  depends_on:
+  #    sqlserver:
+  #      condition: service_healthy
+  #  networks:
+  #    - consultas_net
+#
   api:
     build:
       context: ./endpointsInterface
@@ -27,13 +25,26 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
-      servico_usuarios:
-        condition: service_started
+      #servico_usuarios:
+      #  condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       - SERVICO_USUARIOS_HOST=servico_usuarios
       - SERVICO_USUARIOS_PORT=5005
+    networks:
+      - consultas_net
+
+  scheduling:
+    build:
+      context: ./SchedulingService
+      dockerfile: Dockerfile
+    container_name: scheduling
+    ports:
+      - "9090:9090"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
     networks:
       - consultas_net
 
