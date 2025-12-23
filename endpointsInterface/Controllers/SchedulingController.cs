@@ -5,17 +5,16 @@ using Scheduling.Grpc;
 namespace endpointsInterface.Controllers;
 
 [ApiController]
-[Route("api/agendamento")]
-public class AgendamentoController : ControllerBase
+[Route("api/scheduling")]
+public class SchedulingController : ControllerBase
 {
     private readonly SchedulingService.SchedulingServiceClient _grpcClient;
 
-    public AgendamentoController(SchedulingService.SchedulingServiceClient grpcClient)
+    public SchedulingController(SchedulingService.SchedulingServiceClient grpcClient)
     {
         _grpcClient = grpcClient;
     }
 
-    // POST: /api/scheduling
     [HttpPost]
     public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentDTO dto)
     {
@@ -24,7 +23,7 @@ public class AgendamentoController : ControllerBase
             PatientId = dto.PatientId,
             DoctorId = dto.DoctorId,
             Specialty = dto.Specialty,
-            DatetimeIso = dto.DatetimeIso
+            Datetime = dto.Datetime
         };
 
         var response = await _grpcClient.CreateAppointmentAsync(request);
@@ -32,7 +31,6 @@ public class AgendamentoController : ControllerBase
         return Ok(response.Appointment);
     }
 
-    // GET: /api/scheduling/patient/{patientId}
     [HttpGet("patient/{patientId}")]
     public async Task<IActionResult> GetByPatient(string patientId)
     {
@@ -46,7 +44,6 @@ public class AgendamentoController : ControllerBase
         return Ok(response.Appointments);
     }
 
-    // GET: /api/scheduling/doctor/{doctorId}
     [HttpGet("doctor/{doctorId}")]
     public async Task<IActionResult> GetByDoctor(string doctorId)
     {

@@ -2,7 +2,7 @@
 
 package scheduling;
 
-option csharp_namespace = "Scheduling.Grpc"; // importante pro C#
+option csharp_namespace = "Scheduling.Grpc";
 
 enum AppointmentStatus {
   STATUS_UNKNOWN   = 0;
@@ -17,7 +17,7 @@ message Appointment {
   string patient_id   = 2;
   string doctor_id    = 3;
   string specialty    = 4;
-  string datetime_iso = 5;
+  string datetime = 5;
   AppointmentStatus status = 6;
 }
 
@@ -25,7 +25,7 @@ message CreateAppointmentRequest {
   string patient_id   = 1;
   string doctor_id    = 2;
   string specialty    = 3;
-  string datetime_iso = 4;
+  string datetime = 4;
 }
 message CreateAppointmentResponse {
   Appointment appointment = 1;

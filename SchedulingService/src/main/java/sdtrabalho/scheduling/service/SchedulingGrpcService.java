@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import sdtrabalho.scheduling.entity.AppointmentEntity;
 import sdtrabalho.scheduling.repository.AppointmentRepository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,15 +19,13 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
         this.repository = repository;
     }
 
-    // ---------- Helpers de conversão Entity <-> Proto ----------
-
     private Appointment toProto(AppointmentEntity entity) {
         return Appointment.newBuilder()
                 .setId(String.valueOf(entity.getId()))
                 .setPatientId(entity.getPatientId())
                 .setDoctorId(entity.getDoctorId())
                 .setSpecialty(entity.getSpecialty())
-                .setDatetimeIso(entity.getDatetimeIso())
+                .setDatetime(entity.getDatetime().toString())
                 .setStatus(AppointmentStatus.valueOf(entity.getStatus()))
                 .build();
     }
@@ -36,18 +35,34 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
         e.setPatientId(request.getPatientId());
         e.setDoctorId(request.getDoctorId());
         e.setSpecialty(request.getSpecialty());
-        e.setDatetimeIso(request.getDatetimeIso());
+        e.setDatetime(LocalDateTime.parse(request.getDatetime()));
         e.setStatus(AppointmentStatus.STATUS_SCHEDULED.name());
         return e;
     }
-
-    // ---------- Métodos gRPC ----------
 
     @Override
     public void createAppointment(CreateAppointmentRequest request,
                                   StreamObserver<CreateAppointmentResponse> responseObserver) {
 
         try {
+            LocalDateTime start = LocalDateTime.parse(request.getDatetime());
+            LocalDateTime end = start.plusMinutes(30);
+
+            boolean freeSchedule =
+                    repository.findByDatetimeBetweenAndStatusNot(
+                            start,
+                            end,
+                            AppointmentStatus.STATUS_CANCELLED.name()
+                    ).isEmpty();
+
+            if (!freeSchedule)
+            {
+                responseObserver.onError(
+                        new IllegalArgumentException("Já existe uma consulta nesse intervalo")
+                );
+                return;
+            }
+
             AppointmentEntity entity = toEntity(request);
             entity.setStatus("STATUS_SCHEDULED");
             AppointmentEntity saved = repository.save(entity);
@@ -61,7 +76,7 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
         } catch (Exception ex) {
             responseObserver.onError(
                     io.grpc.Status.INTERNAL
-                            .withDescription("Erro ao criar consulta")
+                            .withDescription(ex.getMessage())
                             .withCause(ex)
                             .asRuntimeException()
             );
