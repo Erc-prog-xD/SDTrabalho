@@ -25,8 +25,10 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
-      #servico_usuarios:
-      #  condition: service_started
+      servico_usuarios:
+        condition: service_started
+      scheduling:
+        condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
@@ -45,6 +47,8 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+      servico_usuarios:
+        condition: service_started
     networks:
       - consultas_net
 

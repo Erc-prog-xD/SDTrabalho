@@ -12,13 +12,13 @@ public class AppointmentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "patient_id", nullable = false)
-    private String patientId;
+    private Integer patientId;
 
     @Column(name = "doctor_id", nullable = false)
-    private String doctorId;
+    private Integer doctorId;
 
     @Column(name = "specialty", nullable = false)
     private String specialty;
@@ -27,5 +27,5 @@ public class AppointmentEntity {
     private LocalDateTime datetime;
 
     @Column(name = "status", nullable = false)
-    private String status; // vamos guardar o enum como String
+    private String status;
 }

@@ -6,7 +6,6 @@ option java_multiple_files = true;
 option java_package = "sdtrabalho.scheduling.proto";
 option java_outer_classname = "SchedulingProto";
 
-// Status da consulta
 enum AppointmentStatus {
   STATUS_UNKNOWN   = 0;
   STATUS_SCHEDULED = 1;
@@ -15,48 +14,63 @@ enum AppointmentStatus {
   STATUS_COMPLETED = 4;
 }
 
-// Modelo de consulta
 message Appointment {
-  string id           = 1;
-  string patient_id   = 2;
-  string doctor_id    = 3;
+  int32 id           = 1;
+  int32 patient_id   = 2;
+  int32 doctor_id    = 3;
   string specialty    = 4;
-  string datetime = 5; // "2025-12-10T14:00:00"
+  string datetime = 5; 
   AppointmentStatus status = 6;
 }
 
-// Criar consulta
 message CreateAppointmentRequest {
-  string patient_id   = 1;
-  string doctor_id    = 2;
+  int32 patient_id   = 1;
+  int32 doctor_id    = 2;
   string specialty    = 3;
   string datetime = 4;
 }
+
 message CreateAppointmentResponse {
-  Appointment appointment = 1;
+  Appointment dados = 1;   
+  string mensage = 2;      
+  bool status = 3;       
 }
 
-// Listar consultas de um usuário (paciente ou médico)
 message ListAppointmentsRequest {
-  string user_id  = 1;
-  bool is_doctor  = 2; // true = médico, false = paciente
-}
-message ListAppointmentsResponse {
-  repeated Appointment appointments = 1;
+  int32 user_id  = 1;
+  bool is_doctor  = 2; 
 }
 
-// Atualizar status
+message ListAppointmentsResponse {
+  repeated Appointment dados = 1;
+  string mensage = 2;       
+  bool status = 3;          
+}
+
 message UpdateStatusRequest {
-  string appointment_id      = 1;
+  int32 appointment_id      = 1;
   AppointmentStatus new_status = 2;
 }
+
 message UpdateStatusResponse {
-  Appointment appointment = 1;
+  Appointment dados = 1;   
+  string mensage = 2;      
+  bool status = 3; 
 }
 
-// Serviço gRPC de Agendamento
+message DeleteAppointmentRequest {
+  int32 appointment_id = 1;
+}
+
+message DeleteAppointmentResponse {
+  Appointment dados = 1;   
+  string mensage = 2;      
+  bool status = 3; 
+}
+
 service SchedulingService {
   rpc CreateAppointment(CreateAppointmentRequest) returns (CreateAppointmentResponse);
   rpc ListAppointments(ListAppointmentsRequest) returns (ListAppointmentsResponse);
   rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+  rpc DeleteAppointment(DeleteAppointmentRequest) returns (DeleteAppointmentResponse);
 }

@@ -2,8 +2,8 @@
 
 public class CreateAppointmentDTO
 {
-    public string PatientId { get; set; } = default!;
-    public string DoctorId { get; set; } = default!;
+    public int PatientId { get; set; } = default!;
+    public int DoctorId { get; set; } = default!;
     public string Specialty { get; set; } = default!;
-    public string Datetime { get; set; } = default!;
+    public DateTime Datetime { get; set; } = default!;
 }

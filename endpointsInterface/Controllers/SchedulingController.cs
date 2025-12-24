@@ -1,4 +1,6 @@
 ﻿using endpointsInterface.DTO.Agendamentos;
+using EndpointsInterface.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Scheduling.Grpc;
 
@@ -6,6 +8,7 @@ namespace endpointsInterface.Controllers;
 
 [ApiController]
 [Route("api/scheduling")]
+[Authorize(Roles = "Admin, Recepcionista, Medico, Paciente")]
 public class SchedulingController : ControllerBase
 {
     private readonly SchedulingService.SchedulingServiceClient _grpcClient;
@@ -16,6 +19,7 @@ public class SchedulingController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin, Recepcionista, Medico")]
     public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentDTO dto)
     {
         var request = new CreateAppointmentRequest
@@ -23,16 +27,16 @@ public class SchedulingController : ControllerBase
             PatientId = dto.PatientId,
             DoctorId = dto.DoctorId,
             Specialty = dto.Specialty,
-            Datetime = dto.Datetime
+            Datetime = dto.Datetime.ToString("yyyy-MM-dd'T'HH:mm:ss")
         };
 
         var response = await _grpcClient.CreateAppointmentAsync(request);
 
-        return Ok(response.Appointment);
+        return Ok(response);
     }
 
     [HttpGet("patient/{patientId}")]
-    public async Task<IActionResult> GetByPatient(string patientId)
+    public async Task<IActionResult> GetByPatient(int patientId)
     {
         var request = new ListAppointmentsRequest
         {
@@ -41,11 +45,12 @@ public class SchedulingController : ControllerBase
         };
 
         var response = await _grpcClient.ListAppointmentsAsync(request);
-        return Ok(response.Appointments);
+        return Ok(response);
     }
 
     [HttpGet("doctor/{doctorId}")]
-    public async Task<IActionResult> GetByDoctor(string doctorId)
+    [Authorize(Roles = "Admin, Recepcionista, Medico")]
+    public async Task<IActionResult> GetByDoctor(int doctorId)
     {
         var request = new ListAppointmentsRequest
         {
@@ -54,26 +59,43 @@ public class SchedulingController : ControllerBase
         };
 
         var response = await _grpcClient.ListAppointmentsAsync(request);
-        return Ok(response.Appointments);
+        return Ok(response);
     }
 
-    //// PUT: /api/scheduling/status
-    //[HttpPut("status")]
-    //public async Task<IActionResult> UpdateStatus([FromBody] UpdateStatusDto dto)
-    //{
-    //    // converte string para enum gRPC
-    //    if (!Enum.TryParse<AppointmentStatus>(dto.NewStatus, out var status))
-    //    {
-    //        return BadRequest("Status inválido. Use valores como STATUS_CONFIRMED, STATUS_CANCELLED, etc.");
-    //    }
+    [HttpPatch("{appointmentId}/status/{newStatus}")]
+    [Authorize(Roles = "Admin, Recepcionista, Medico")]
+    public async Task<IActionResult> UpdateStatus(int appointmentId, int newStatus)
+    {
+        if (!Enum.IsDefined(typeof(AppointmentStatus), newStatus))
+            return BadRequest(
+                new Response<object>
+                {
+                    Status = false,
+                    Dados = null,
+                    Mensage = "Status inválido"
+                }
+            );
 
-    //    var request = new UpdateStatusRequest
-    //    {
-    //        AppointmentId = dto.AppointmentId,
-    //        NewStatus = status
-    //    };
+        var request = new UpdateStatusRequest
+        {
+            AppointmentId = appointmentId,
+            NewStatus = (AppointmentStatus)newStatus
+        };
 
-    //    var response = await _grpcClient.UpdateStatusAsync(request);
-    //    return Ok(response.Appointment);
-    //}
+        var response = await _grpcClient.UpdateStatusAsync(request);
+        return Ok(response);
+    }
+
+    [HttpDelete("{appointmentId}")]
+    [Authorize(Roles = "Admin, Recepcionista, Medico")]
+    public async Task<IActionResult> DeleteAppointment(int appointmentId)
+    {
+        var request = new DeleteAppointmentRequest
+        {
+            AppointmentId = appointmentId,
+        };
+
+        var response = await _grpcClient.DeleteAppointmentAsync(request);
+        return Ok(response);
+    }
 }
