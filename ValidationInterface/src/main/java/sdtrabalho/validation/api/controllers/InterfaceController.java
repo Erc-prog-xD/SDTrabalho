@@ -1,5 +1,8 @@
 package sdtrabalho.validation.api.controllers;
 
+import sdtrabalho.validation.dtos.HealthInsuranceDTO;
+import sdtrabalho.validation.dtos.PrivatePaymentDTO;
+import sdtrabalho.validation.dtos.ValidationResponseDTO;
 import sdtrabalho.validation.interfaces.ValidationService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -14,29 +18,60 @@ import java.rmi.registry.Registry;
 @RequestMapping("/api/validation")
 public class InterfaceController {
 
-    @PostMapping
-    public ResponseEntity create() {
+    private final String HOST = "validation";
+    private final Integer PORT = 1099;
+    private final String SERVICE_NAME = "ValidationService";
 
+    private ValidationService connection() {
         try {
-            String host = "validation"; // ou nome do serviço no docker-compose
-            int port = 1099;
 
-            // Conecta ao RMI Registry
-            Registry registry = LocateRegistry.getRegistry(host, port);
+            Registry registry = LocateRegistry.getRegistry(HOST, PORT);
 
-            // Lookup do serviço pelo nome definido no RmiServiceExporter
-            ValidationService service =
-                    (ValidationService) registry.lookup("ValidationService");
+            return (ValidationService) registry.lookup(SERVICE_NAME);
 
-            // Chamada remota (RPC/RMI)
-            Boolean response =
-                    service.VerifyPaymentConfirmation(1,2);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex.getMessage());
+
+        }
+    }
+
+    @PostMapping("/health-insurance")
+    public ResponseEntity validateHealthInsurance(@RequestBody HealthInsuranceDTO healthInsuranceDTO) {
+        
+        try {
+
+            ValidationService service = connection();
+
+            ValidationResponseDTO response = service.validateHealthInsurance(healthInsuranceDTO);
 
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+
+            return ResponseEntity.status(503).body(
+                new ValidationResponseDTO(false, "Falha ao chamar RMI (convênio): " + ex.getMessage())
+            );
+
+        }
+    }
+
+    @PostMapping("/private-payment")
+    public ResponseEntity validatePrivatePayment(@RequestBody PrivatePaymentDTO privatePaymentDTO) {
+        
+        try {
+
+            ValidationService service = connection();
+
+            ValidationResponseDTO response = service.validatePrivatePayment(privatePaymentDTO);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception ex) {
+
+            return ResponseEntity.status(503).body(
+                new ValidationResponseDTO(false, "Falha ao chamar RMI (pagamento): " + ex.getMessage())
+            );
+
+        }
     }
 }
