@@ -52,6 +52,32 @@ services:
     networks:
       - consultas_net
 
+  validation:
+    build:
+      context: ./ValidationService
+      dockerfile: Dockerfile
+    container_name: validation
+    ports:
+      - "1099:1099"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - consultas_net
+
+  validation_interface:
+    build:
+      context: ./ValidationInterface
+      dockerfile: Dockerfile
+    container_name: validation_interface
+    ports:
+      - "9000:9000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - consultas_net
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: SistemaDistribuido_db
