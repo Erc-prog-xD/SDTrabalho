@@ -31,4 +31,31 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
         @Param("doctorId") Integer doctorId,
         @Param("patientId") Integer patientId
     );
+
+    @Query(value = """
+        SELECT CASE WHEN EXISTS (
+            SELECT 1
+            FROM clinica_db..users u
+            WHERE u.Role = 0
+            AND u.Id = :patientId
+            AND u.DeletionDate IS NULL
+        ) THEN 1 ELSE 0 END
+        """, nativeQuery = true)
+        
+    int verifyExistsPacient(
+        @Param("patientId") Integer patientId
+    );
+
+     @Query(value = """
+        SELECT CASE WHEN EXISTS (
+            SELECT 1
+            FROM clinica_db..users u
+            WHERE u.Role = 1
+            AND u.Id = :doctorId
+            AND u.DeletionDate IS NULL
+        ) THEN 1 ELSE 0 END
+        """, nativeQuery = true)
+    int verifyExistsMedic(
+        @Param("doctorId") Integer doctorId
+    );
 }

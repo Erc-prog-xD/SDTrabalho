@@ -47,6 +47,33 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
         try {
             LocalDateTime start = LocalDateTime.parse(request.getDatetime());
 
+            // valida médico
+            boolean doctorExists = repository.verifyExistsMedic(request.getDoctorId()) == 1;
+            if (!doctorExists) {
+                CreateAppointmentResponse resp = CreateAppointmentResponse.newBuilder()
+                    .setStatus(false)
+                    .setMensage("O médico não existe")
+                    .build();
+
+                responseObserver.onNext(resp);
+                responseObserver.onCompleted();
+                return;
+            }
+
+            // valida paciente
+            boolean patientExists = repository.verifyExistsPacient(request.getPatientId()) == 1;
+            if (!patientExists) {
+                CreateAppointmentResponse resp = CreateAppointmentResponse.newBuilder()
+                    .setStatus(false)
+                    .setMensage("O paciente não existe")
+                    .build();
+
+                responseObserver.onNext(resp);
+                responseObserver.onCompleted();
+                return;
+            }
+
+
             if (start.isBefore(LocalDateTime.now())){
                 CreateAppointmentResponse resp = CreateAppointmentResponse.newBuilder()
                     .setStatus(false)
