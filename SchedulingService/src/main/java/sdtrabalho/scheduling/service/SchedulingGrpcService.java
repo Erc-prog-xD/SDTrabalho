@@ -109,6 +109,14 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
             entity.setStatus("STATUS_SCHEDULED");
             AppointmentEntity saved = repository.save(entity);
 
+            repository.insertNotification(
+                saved.getDoctorId(),
+                saved.getPatientId(),
+                saved.getId(),
+                saved.getStatus(),
+                "Consulta agendada com sucesso"
+            );
+
             CreateAppointmentResponse resp = CreateAppointmentResponse.newBuilder()
                 .setStatus(true)
                 .setMensage("Agendamento criado com sucesso")

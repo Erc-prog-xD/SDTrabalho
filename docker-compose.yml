@@ -1,4 +1,35 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - consultas_net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  notificationservice:
+    build:
+      context: ./NotificationService
+    container_name: notificationservice
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+    environment:
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: guest
+      RABBIT_PASS: guest
+      SQL_CONN: "Server=sqlserver,1433;Database=clinica_db;User Id=sa;Password=SDClinica@123;TrustServerCertificate=True;"
+    networks:
+      - consultas_net
+
   servico_usuarios:
     build:
       context: ./servicoUsuarios
