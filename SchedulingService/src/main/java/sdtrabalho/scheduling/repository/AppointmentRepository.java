@@ -1,6 +1,9 @@
 package sdtrabalho.scheduling.repository;
 
 
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import sdtrabalho.scheduling.entity.AppointmentEntity;
@@ -46,7 +49,7 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
         @Param("patientId") Integer patientId
     );
 
-     @Query(value = """
+    @Query(value = """
         SELECT CASE WHEN EXISTS (
             SELECT 1
             FROM clinica_db..users u
@@ -57,5 +60,21 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
         """, nativeQuery = true)
     int verifyExistsMedic(
         @Param("doctorId") Integer doctorId
+    );
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+        INSERT INTO clinica_db..Notifications
+            (DoctorId, PatientId, AppointmentId, Status, Message, CreatedAt, Published, DeletionDate)
+        VALUES
+            (:doctorId, :patientId, :appointmentId, :status, :message, GETDATE(), 0, NULL)
+        """, nativeQuery = true)
+    void insertNotification(
+        @Param("doctorId") Integer doctorId,
+        @Param("patientId") Integer patientId,
+        @Param("appointmentId") Integer appointmentId,
+        @Param("status") String status,
+        @Param("message") String message
     );
 }

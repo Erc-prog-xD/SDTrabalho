@@ -104,7 +104,7 @@ public class AuthUsuarioService : IAuthUsuarioService
             _db.Users.Add(novo);
             await _db.SaveChangesAsync();
             
-            response.Status = false;
+            response.Status = true;
             response.Mensage = "Usuário registrado com sucesso!";
         }
         catch (Exception ex)
