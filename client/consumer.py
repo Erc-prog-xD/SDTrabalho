@@ -9,9 +9,15 @@ RABBIT_HOST = os.getenv("RABBIT_HOST", "localhost")
 RABBIT_PORT = int(os.getenv("RABBIT_PORT", "5672"))
 RABBIT_USER = os.getenv("RABBIT_USER", "guest")
 RABBIT_PASS = os.getenv("RABBIT_PASS", "guest")
-QUEUE = os.getenv("RABBIT_QUEUE", "notifications")
 
-DATA_DIR = "/app/data"
+# ✅ Pub/Sub: agora a gente consome de uma fila "do subscriber"
+# (uma fila por consumidor) e ela é bindada num exchange fanout
+EXCHANGE = os.getenv("RABBIT_EXCHANGE", "notifications.x")
+EXCHANGE_TYPE = os.getenv("RABBIT_EXCHANGE_TYPE", "fanout")
+
+QUEUE = os.getenv("RABBIT_QUEUE", "notifications.client.q")
+
+DATA_DIR = "/data"
 LOG_FILE = f"{DATA_DIR}/notifications.log"
 
 logging.basicConfig(
@@ -20,7 +26,10 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("consumer")
-logger.info("Configurado RABBIT_HOST=%s RABBIT_PORT=%s RABBIT_USER=%s", RABBIT_HOST, RABBIT_PORT, RABBIT_USER)
+logger.info(
+    "Config RABBIT_HOST=%s RABBIT_PORT=%s RABBIT_USER=%s EXCHANGE=%s QUEUE=%s",
+    RABBIT_HOST, RABBIT_PORT, RABBIT_USER, EXCHANGE, QUEUE
+)
 
 def ensure_data_dir():
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -37,7 +46,7 @@ def process_message(msg: dict):
         "createdAt": msg.get("CreatedAt"),
         "receivedAt": datetime.utcnow().isoformat()
     }
-
+    print("passsouashdausduasdhu")
     logger.info(
         "NOTIFICAÇÃO RECEBIDA | Paciente=%s | Consulta=%s | Status=%s | Msg=%s",
         notification["patientId"],
@@ -46,6 +55,7 @@ def process_message(msg: dict):
         notification["message"]
     )
 
+    # ✅ MANTIDO exatamente do jeito que você fazia
     os.makedirs("/app/data", exist_ok=True)
 
     with open("/app/data/notifications.log", "a") as f:
@@ -56,11 +66,12 @@ def process_message(msg: dict):
 
 
 def main():
+    print("chegou")
     ensure_data_dir()
 
     params = pika.ConnectionParameters(
         host=RABBIT_HOST,
-        port=RABBIT_PORT,           
+        port=RABBIT_PORT,
         credentials=pika.PlainCredentials(RABBIT_USER, RABBIT_PASS),
         heartbeat=60
     )
@@ -77,7 +88,14 @@ def main():
         raise RuntimeError("Não foi possível conectar ao RabbitMQ")
 
     channel = connection.channel()
+
+    # ✅ Pub/Sub: declara o exchange (fanout) e a fila do subscriber
+    channel.exchange_declare(exchange=EXCHANGE, exchange_type=EXCHANGE_TYPE, durable=True)
     channel.queue_declare(queue=QUEUE, durable=True)
+
+    # ✅ Pub/Sub: bind da fila ao exchange (é isso que faz "todo subscriber receber")
+    channel.queue_bind(queue=QUEUE, exchange=EXCHANGE)
+
     channel.basic_qos(prefetch_count=1)
 
     def callback(ch, method, properties, body):
@@ -91,8 +109,7 @@ def main():
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     channel.basic_consume(queue=QUEUE, on_message_callback=callback)
-
-    logger.info("Consumer pronto. Aguardando notificações...")
+    logger.info("Consumer pronto. Aguardando notificações... (queue=%s exchange=%s)", QUEUE, EXCHANGE)
     try:
         channel.start_consuming()
     except KeyboardInterrupt:

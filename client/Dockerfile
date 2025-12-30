@@ -20,4 +20,4 @@ ENV RABBIT_PORT=5672
 ENV RABBIT_USER=guest
 ENV RABBIT_PASS=guest
 
-CMD ["/bin/bash", "-c", "./help.sh && /bin/bash"]
+CMD ["/bin/bash", "-c", "consumer.py"]

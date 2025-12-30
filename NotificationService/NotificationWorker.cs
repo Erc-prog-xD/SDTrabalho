@@ -57,12 +57,13 @@ public class NotificationWorker : BackgroundService
         _connection = factory.CreateConnection("notificationservice-publisher");
         _channel = _connection.CreateModel();
 
-        _channel.QueueDeclare(
-            queue: "notifications",
+       _channel.ExchangeDeclare(
+            exchange: "notifications.x",
+            type: "fanout",
             durable: true,
-            exclusive: false,
             autoDelete: false,
-            arguments: null);
+            arguments: null
+        );
 
         _logger.LogInformation("✅ Publisher pronto: SQL ok + RabbitMQ ok ({Host}).", host);
 
@@ -99,12 +100,12 @@ public class NotificationWorker : BackgroundService
                     props.Persistent = true; // importante se fila for durable
                     props.ContentType = "application/json";
 
-                    _channel.BasicPublish(
-                        exchange: "",
-                        routingKey: "notifications",
-                        basicProperties: props,
-                        body: body);
-
+                   _channel.BasicPublish(
+                    exchange: "notifications.x",
+                    routingKey: "",              // fanout ignora routingKey
+                    basicProperties: props,
+                    body: body
+                );
                     // marca como publicado no banco
                     await _repo.MarkPublishedAsync(n.Id);
 
