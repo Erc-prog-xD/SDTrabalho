@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -36,6 +37,7 @@ public class InterfaceController {
     }
 
     @PostMapping("/health-insurance")
+    @PreAuthorize("hasAnyRole('Admin','Recepcionista','Medico')")
     public ResponseEntity validateHealthInsurance(@RequestBody HealthInsuranceDTO healthInsuranceDTO) {
         
         try {
@@ -56,6 +58,7 @@ public class InterfaceController {
     }
 
     @PostMapping("/private-payment")
+    @PreAuthorize("hasAnyRole('Admin','Recepcionista','Medico')")
     public ResponseEntity validatePrivatePayment(@RequestBody PrivatePaymentDTO privatePaymentDTO) {
         
         try {
