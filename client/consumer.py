@@ -5,19 +5,22 @@ import time
 import pika
 from datetime import datetime
 
-RABBIT_HOST = os.getenv("RABBIT_HOST", "rabbitmq")
+RABBIT_HOST = os.getenv("RABBIT_HOST", "localhost")
+RABBIT_PORT = int(os.getenv("RABBIT_PORT", "5672"))
 RABBIT_USER = os.getenv("RABBIT_USER", "guest")
 RABBIT_PASS = os.getenv("RABBIT_PASS", "guest")
 QUEUE = os.getenv("RABBIT_QUEUE", "notifications")
 
-DATA_DIR = "/data"
+DATA_DIR = "/app/data"
 LOG_FILE = f"{DATA_DIR}/notifications.log"
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s"
 )
+
 logger = logging.getLogger("consumer")
+logger.info("Configurado RABBIT_HOST=%s RABBIT_PORT=%s RABBIT_USER=%s", RABBIT_HOST, RABBIT_PORT, RABBIT_USER)
 
 def ensure_data_dir():
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -55,10 +58,10 @@ def process_message(msg: dict):
 def main():
     ensure_data_dir()
 
-    credentials = pika.PlainCredentials(RABBIT_USER, RABBIT_PASS)
     params = pika.ConnectionParameters(
         host=RABBIT_HOST,
-        credentials=credentials,
+        port=RABBIT_PORT,           
+        credentials=pika.PlainCredentials(RABBIT_USER, RABBIT_PASS),
         heartbeat=60
     )
 

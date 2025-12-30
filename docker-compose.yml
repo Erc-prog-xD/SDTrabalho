@@ -125,6 +125,21 @@ services:
     networks:
       - consultas_net
 
+  client:
+    image: lucasmt1/cliente-sistema-medico:latest
+    container_name: cliente_interativo
+    stdin_open: true
+    tty: true
+    environment:
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_PORT=5672
+      - RABBIT_USER=guest
+      - RABBIT_PASS=guest
+      - API_HOST=api
+      - API_PORT=80
+    networks:
+      - consultas_net
+
 networks:
   consultas_net:
     driver: bridge

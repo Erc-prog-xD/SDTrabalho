@@ -15,8 +15,9 @@ RUN chmod +x help.sh
 
 ENV API_HOST=host.docker.internal
 ENV API_PORT=8080
-ENV RABBITMQ_HOST=host.docker.internal
-ENV RABBITMQ_PORT=5672
-
+ENV RABBIT_HOST=host.docker.internal
+ENV RABBIT_PORT=5672
+ENV RABBIT_USER=guest
+ENV RABBIT_PASS=guest
 
 CMD ["/bin/bash", "-c", "./help.sh && /bin/bash"]
