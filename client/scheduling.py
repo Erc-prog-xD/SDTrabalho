@@ -126,12 +126,14 @@ def criar(patient_id, doctor_id, specialty, datetime_str):
         print("Nao foi possivel obter informacoes do usuario.")
         return
     
-    if not validar_permissao_paciente(patient_id, usuario_info):
-        role = usuario_info.get('role', 'Desconhecido')
-        if role == 'Paciente':
-            print("ERRO: Pacientes so podem criar agendamentos para si mesmos.")
-        else:
-            print(f"ERRO: Usuario com role '{role}' nao tem permissao para criar agendamento.")
+    role = usuario_info.get('role')
+    
+    if role not in ['Medico', 'Recepcionista', 'Admin']:
+        print(f"ERRO: Usuario com role '{role}' nao tem permissao para criar agendamento.")
+        return
+
+    if role == 'Medico' and str(usuario_info.get('id')) != str(doctor_id):
+        print("ERRO: Medicos so podem criar agendamentos para si mesmos.")
         return
     
     print(f"Criando agendamento...")
@@ -151,16 +153,14 @@ def criar(patient_id, doctor_id, specialty, datetime_str):
     
     if response:
         print(f"Status HTTP: {response.status_code}")
-        
         data = processar_resposta(response)
-        
-        if data:
-            if isinstance(data, dict) and data.get('status') == True:
-                print("Agendamento criado com sucesso!")
+        if data and isinstance(data, dict) and data.get('status') == True:
+            print("Agendamento criado com sucesso!")
         else:
             print(f"Resposta: {response.text}")
     else:
         print("Nao houve resposta da API.")
+
 
 def listar_paciente(patient_id):
     """Lista agendamentos de um paciente especifico"""
