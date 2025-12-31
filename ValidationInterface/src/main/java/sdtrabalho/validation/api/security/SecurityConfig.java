@@ -29,7 +29,6 @@ public class SecurityConfig {
 
   @Bean
   JwtDecoder jwtDecoder() {
-    System.out.println(jwtSecret);
     var keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
     var key = new SecretKeySpec(keyBytes, "HmacSHA256");
     return NimbusJwtDecoder.withSecretKey(key).build();
@@ -66,7 +65,6 @@ public class SecurityConfig {
     );
 
     if (roleClaim instanceof String s) {
-      System.out.println(s);
       roles.add(s);
     } else if (roleClaim instanceof Collection<?> c) {
       for (var r : c) roles.add(String.valueOf(r));

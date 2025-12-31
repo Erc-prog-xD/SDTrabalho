@@ -23,10 +23,10 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
 
     @Query(value = """
         SELECT *
-        FROM clinica_db..appointments a
-        WHERE :start BETWEEN a.datetime AND DATEADD(MINUTE, 29, a.datetime)
-          AND a.status <> :status
-          AND (a.doctor_id = :doctorId OR a.patient_id = :patientId)
+        FROM clinica_db..Appointments a
+        WHERE :start BETWEEN a.Datetime AND DATEADD(MINUTE, 29, a.Datetime)
+          AND a.Status <> :status
+          AND (a.DoctorId = :doctorId OR a.PatientId = :patientId)
         """, nativeQuery = true)
     List<AppointmentEntity> findAppointmentConflicts(
         @Param("start") LocalDateTime start,
@@ -60,21 +60,5 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
         """, nativeQuery = true)
     int verifyExistsMedic(
         @Param("doctorId") Integer doctorId
-    );
-
-    @Modifying
-    @Transactional
-    @Query(value = """
-        INSERT INTO clinica_db..Notifications
-            (DoctorId, PatientId, AppointmentId, Status, Message, CreatedAt, Published, DeletionDate)
-        VALUES
-            (:doctorId, :patientId, :appointmentId, :status, :message, GETDATE(), 0, NULL)
-        """, nativeQuery = true)
-    void insertNotification(
-        @Param("doctorId") Integer doctorId,
-        @Param("patientId") Integer patientId,
-        @Param("appointmentId") Integer appointmentId,
-        @Param("status") String status,
-        @Param("message") String message
     );
 }

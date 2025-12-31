@@ -51,14 +51,14 @@ public class InterfaceController {
         } catch (Exception ex) {
 
             return ResponseEntity.status(503).body(
-                new ValidationResponseDTO(false, "Falha ao chamar RMI (convênio): " + ex.getMessage())
+                new ValidationResponseDTO(false, ex.getMessage())
             );
 
         }
     }
 
     @PostMapping("/private-payment")
-    @PreAuthorize("hasAnyRole('Admin','Recepcionista','Medico')")
+    @PreAuthorize("hasAnyRole('Paciente')")
     public ResponseEntity validatePrivatePayment(@RequestBody PrivatePaymentDTO privatePaymentDTO) {
         
         try {
@@ -72,7 +72,7 @@ public class InterfaceController {
         } catch (Exception ex) {
 
             return ResponseEntity.status(503).body(
-                new ValidationResponseDTO(false, "Falha ao chamar RMI (pagamento): " + ex.getMessage())
+                new ValidationResponseDTO(false, ex.getMessage())
             );
 
         }

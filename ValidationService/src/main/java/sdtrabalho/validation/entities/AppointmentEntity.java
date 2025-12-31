@@ -6,26 +6,27 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "appointments")
+@Table(name = "[Appointments]")
 @Data
 public class AppointmentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "Id")
     private Integer id;
 
-    @Column(name = "patient_id", nullable = false)
+    @Column(name = "PatientId", nullable = false)
     private Integer patientId;
 
-    @Column(name = "doctor_id", nullable = false)
+    @Column(name = "DoctorId", nullable = false)
     private Integer doctorId;
 
-    @Column(name = "specialty", nullable = false)
+    @Column(name = "Specialty", nullable = false)
     private String specialty;
 
-    @Column(name = "datetime", nullable = false)
+    @Column(name = "Datetime", nullable = false)
     private LocalDateTime datetime;
 
-    @Column(name = "status", nullable = false)
+    @Column(name = "Status", nullable = false)
     private String status;
 }

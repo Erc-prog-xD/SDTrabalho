@@ -3,8 +3,11 @@ package sdtrabalho.scheduling.service;
 import sdtrabalho.scheduling.proto.*;
 import io.grpc.stub.StreamObserver;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import sdtrabalho.scheduling.entity.AppointmentEntity;
 import sdtrabalho.scheduling.repository.AppointmentRepository;
+import sdtrabalho.scheduling.repository.NotificationRepository;
+import sdtrabalho.scheduling.entity.NotificationEntity;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -13,11 +16,10 @@ import java.util.stream.Collectors;
 @Service
 public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServiceImplBase {
 
-    private final AppointmentRepository repository;
-
-    public SchedulingGrpcService(AppointmentRepository repository) {
-        this.repository = repository;
-    }
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     private Appointment toProto(AppointmentEntity entity) {
         return Appointment.newBuilder()
@@ -28,6 +30,23 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
                 .setDatetime(entity.getDatetime().toString())
                 .setStatus(AppointmentStatus.valueOf(entity.getStatus()))
                 .build();
+    }
+
+    private NotificationEntity toEntity(            
+        Integer appointmentId,
+        Integer patientId,
+        Integer doctorId,
+        String message,
+        String status) {
+        NotificationEntity e = new NotificationEntity();
+        e.setAppointmentId(appointmentId);
+        e.setPatientId(patientId);
+        e.setDoctorId(doctorId);
+        e.setMessage(message);
+        e.setCreatedAt(LocalDateTime.now());
+        e.setStatus(status);
+        e.setPublished(false);
+        return e;
     }
 
     private AppointmentEntity toEntity(CreateAppointmentRequest request) {
@@ -47,8 +66,7 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
         try {
             LocalDateTime start = LocalDateTime.parse(request.getDatetime());
 
-            // valida médico
-            boolean doctorExists = repository.verifyExistsMedic(request.getDoctorId()) == 1;
+            boolean doctorExists = appointmentRepository.verifyExistsMedic(request.getDoctorId()) == 1;
             if (!doctorExists) {
                 CreateAppointmentResponse resp = CreateAppointmentResponse.newBuilder()
                     .setStatus(false)
@@ -60,8 +78,7 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
                 return;
             }
 
-            // valida paciente
-            boolean patientExists = repository.verifyExistsPacient(request.getPatientId()) == 1;
+            boolean patientExists = appointmentRepository.verifyExistsPacient(request.getPatientId()) == 1;
             if (!patientExists) {
                 CreateAppointmentResponse resp = CreateAppointmentResponse.newBuilder()
                     .setStatus(false)
@@ -86,7 +103,7 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
             }
 
             boolean freeSchedule =
-                    repository.findAppointmentConflicts(
+                    appointmentRepository.findAppointmentConflicts(
                             start,
                             AppointmentStatus.STATUS_CANCELLED.name(),
                             request.getDoctorId(),
@@ -107,15 +124,16 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
 
             AppointmentEntity entity = toEntity(request);
             entity.setStatus("STATUS_SCHEDULED");
-            AppointmentEntity saved = repository.save(entity);
+            AppointmentEntity saved = appointmentRepository.save(entity);
 
-            repository.insertNotification(
-                saved.getDoctorId(),
-                saved.getPatientId(),
+            NotificationEntity notification = toEntity(
                 saved.getId(),
-                saved.getStatus(),
-                "Consulta agendada com sucesso"
-            );
+                saved.getPatientId(),
+                saved.getDoctorId(),
+                "Consulta agendada com sucesso",
+                saved.getStatus());
+        
+            notificationRepository.save(notification);
 
             CreateAppointmentResponse resp = CreateAppointmentResponse.newBuilder()
                 .setStatus(true)
@@ -142,9 +160,9 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
 
         List<AppointmentEntity> list;
         if (request.getIsDoctor()) {
-            list = repository.findByDoctorId(request.getUserId());
+            list = appointmentRepository.findByDoctorId(request.getUserId());
         } else {
-            list = repository.findByPatientId(request.getUserId());
+            list = appointmentRepository.findByPatientId(request.getUserId());
         }
 
         List<Appointment> protoList = list.stream()
@@ -167,7 +185,7 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
 
         try {
 
-            AppointmentEntity entity = repository.findById(request.getAppointmentId()).orElse(null);
+            AppointmentEntity entity = appointmentRepository.findById(request.getAppointmentId()).orElse(null);
             if (entity == null) {
                 UpdateStatusResponse resp = UpdateStatusResponse.newBuilder()
                     .setStatus(false)
@@ -179,7 +197,16 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
             }
     
             entity.setStatus(request.getNewStatus().name());
-            AppointmentEntity updated = repository.save(entity);
+            AppointmentEntity updated = appointmentRepository.save(entity);
+
+            NotificationEntity notification = toEntity(
+                updated.getId(),
+                updated.getPatientId(),
+                updated.getDoctorId(),
+                "Status atualizado",
+                updated.getStatus());
+        
+            notificationRepository.save(notification);
     
             UpdateStatusResponse res = UpdateStatusResponse.newBuilder()
                     .setStatus(true)
@@ -207,7 +234,7 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
 
         try {
 
-            AppointmentEntity entity = repository.findById(request.getAppointmentId()).orElse(null);
+            AppointmentEntity entity = appointmentRepository.findById(request.getAppointmentId()).orElse(null);
             if (entity == null) {
                 DeleteAppointmentResponse resp = DeleteAppointmentResponse.newBuilder()
                     .setStatus(false)
@@ -218,7 +245,7 @@ public class SchedulingGrpcService extends SchedulingServiceGrpc.SchedulingServi
                 return;
             }
     
-            repository.delete(entity);
+            appointmentRepository.delete(entity);
     
             DeleteAppointmentResponse res = DeleteAppointmentResponse.newBuilder()
                     .setStatus(true)
