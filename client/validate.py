@@ -45,14 +45,27 @@ def obter_info_usuario():
         return None
 
 
-def validar_role_permitida():
+def validar_role_convênio():
     info = obter_info_usuario()
     if not info:
         return False
 
     role = info.get("role")
     if role not in ["Admin", "Medico", "Recepcionista"]:
-        print(f"Role '{role}' não pode validar pagamento/agendamento.")
+        print(f"Role '{role}' não pode validar convênio.")
+        return False
+
+    return True
+
+
+def validar_role_pagamento_privado():
+    info = obter_info_usuario()
+    if not info:
+        return False
+
+    role = info.get("role")
+    if role != "Paciente":
+        print(f"Role '{role}' não pode autorizar pagamento privado.")
         return False
 
     return True
@@ -98,16 +111,17 @@ def processar_resposta(response):
     if sucesso is None:
         sucesso = data.get("approved")
 
-    if sucesso is True:
+    if sucesso:
         print("Sucesso:", data.get("message"))
     else:
         print("Falha:", data.get("message"))
 
     print(json.dumps(data, indent=2, ensure_ascii=False))
 
-
 def health_insurance(appointment_id, patient_id, insurance, procedure):
-    if not validar_role_permitida():
+    if not verificar_login():
+        return
+    if not validar_role_convênio():
         return
 
     payload = {
@@ -122,7 +136,9 @@ def health_insurance(appointment_id, patient_id, insurance, procedure):
 
 
 def private_payment(appointment_id, patient_id, amount, method):
-    if not validar_role_permitida():
+    if not verificar_login():
+        return
+    if not validar_role_pagamento_privado():
         return
 
     payload = {
@@ -135,25 +151,17 @@ def private_payment(appointment_id, patient_id, amount, method):
     response = request_post("/api/validation/private-payment", payload)
     processar_resposta(response)
 
-
 def help():
     print("=" * 55)
     print("VALIDAÇÃO DE PAGAMENTO / CONVÊNIO")
     print("=" * 55)
     print("")
-    print("Convênio:")
+    print("Convênio (Admin | Médico | Recepcionista):")
     print("  python validate.py health-insurance <AGENDAMENTO_ID> <PACIENTE_ID> <CONVENIO> <PROCEDIMENTO>")
-    print('  Ex: python validate.py health-insurance 2 1 Unimed "Consulta Cardiologia"')
     print("")
-    print("Pagamento privado:")
+    print("Pagamento privado (Paciente):")
     print("  python validate.py private-payment <AGENDAMENTO_ID> <PACIENTE_ID> <VALOR> <METODO>")
     print("  Métodos aceitos: PIX | CREDITO | DEBITO")
-    print("  Ex: python validate.py private-payment 2 1 250 PIX")
-    print("")
-    print("Regras:")
-    print("  - Apenas Admin, Medico ou Recepcionista")
-    print("  - Token JWT obrigatório")
-    print("  - Atualiza status do agendamento automaticamente")
     print("=" * 55)
 
 def main():
