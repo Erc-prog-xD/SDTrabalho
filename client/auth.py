@@ -22,7 +22,6 @@ def login(cpf, senha):
         
         if data.get('status') == True:
             token = data['dados']
-            # Salva o token em arquivo
             with open(TOKEN_FILE, 'w') as f:
                 f.write(token)
             print("Login realizado com sucesso!")

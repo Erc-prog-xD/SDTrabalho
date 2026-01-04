@@ -10,8 +10,6 @@ RABBIT_PORT = int(os.getenv("RABBIT_PORT", "5672"))
 RABBIT_USER = os.getenv("RABBIT_USER", "guest")
 RABBIT_PASS = os.getenv("RABBIT_PASS", "guest")
 
-# ✅ Pub/Sub: agora a gente consome de uma fila "do subscriber"
-# (uma fila por consumidor) e ela é bindada num exchange fanout
 EXCHANGE = os.getenv("RABBIT_EXCHANGE", "notifications.x")
 EXCHANGE_TYPE = os.getenv("RABBIT_EXCHANGE_TYPE", "fanout")
 
@@ -46,7 +44,6 @@ def process_message(msg: dict):
         "createdAt": msg.get("CreatedAt"),
         "receivedAt": datetime.utcnow().isoformat()
     }
-    print("passsouashdausduasdhu")
     logger.info(
         "NOTIFICAÇÃO RECEBIDA | Paciente=%s | Consulta=%s | Status=%s | Msg=%s",
         notification["patientId"],
@@ -55,7 +52,6 @@ def process_message(msg: dict):
         notification["message"]
     )
 
-    # ✅ MANTIDO exatamente do jeito que você fazia
     os.makedirs("/app/data", exist_ok=True)
 
     with open("/app/data/notifications.log", "a") as f:
@@ -66,7 +62,6 @@ def process_message(msg: dict):
 
 
 def main():
-    print("chegou")
     ensure_data_dir()
 
     params = pika.ConnectionParameters(
@@ -89,11 +84,9 @@ def main():
 
     channel = connection.channel()
 
-    # ✅ Pub/Sub: declara o exchange (fanout) e a fila do subscriber
     channel.exchange_declare(exchange=EXCHANGE, exchange_type=EXCHANGE_TYPE, durable=True)
     channel.queue_declare(queue=QUEUE, durable=True)
 
-    # ✅ Pub/Sub: bind da fila ao exchange (é isso que faz "todo subscriber receber")
     channel.queue_bind(queue=QUEUE, exchange=EXCHANGE)
 
     channel.basic_qos(prefetch_count=1)
@@ -117,7 +110,6 @@ def main():
     finally:
         if not connection.is_closed:
             connection.close()
-
 
 if __name__ == "__main__":
     main()

@@ -203,7 +203,6 @@ def listar_paciente(patient_id):
                 else:
                     print("Nenhum agendamento encontrado para este paciente.")
             else:
-                print("Resposta inesperada da API.")
                 print(json.dumps(data, indent=2, ensure_ascii=False))
     else:
         print("Nao houve resposta da API.")
@@ -254,9 +253,8 @@ def listar_medico(doctor_id):
                 else:
                     print("Nenhum agendamento encontrado para este medico.")
             else:
-                print("Resposta inesperada da API.")
                 print(json.dumps(data, indent=2, ensure_ascii=False))
-        # Se data for None, o erro ja foi mostrado em processar_resposta
+
     else:
         print("Nao houve resposta da API.")
 
@@ -404,7 +402,7 @@ def main():
             print("Uso incorreto!")
             print("Correto: python scheduling.py status <AGENDAMENTO_ID> <NOVO_STATUS>")
             print('Exemplo: python scheduling.py status 1 "1"')
-            print('Status (valores inteiros): 0=Agendado, 1=Confirmado, 2=Cancelado, 3=Concluido')
+            print('Status (valores inteiros): 0=STATUS_UNKNOWN, 1=STATUS_SCHEDULED, 2=STATUS_CONFIRMED, 3=STATUS_CANCELLED')
             return
         
         atualizar_status(sys.argv[2], sys.argv[3])

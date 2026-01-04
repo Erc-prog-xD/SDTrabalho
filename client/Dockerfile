@@ -8,7 +8,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY *.py .
 COPY help.sh .
 COPY auth.py .
-COPY token_utils.py .
 COPY scheduling.py .
 
 RUN chmod +x help.sh
