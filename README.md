@@ -24,11 +24,11 @@ O projeto é executado de forma integrada utilizando **Docker Compose**.
 ## Serviços do Projeto
 
 - **endpointsInterface** (.NET) – API principal
-- **servicoUsuarios** (.NET) – Serviço de usuários + servidor Socket TCP
+- **servicoUsuarios** (.NET) – Serviço de usuários (Socket TCP)
 - **SchedulingService** (Java) – Serviço de agendamentos (gRPC)
 - **ValidationService** (Java) – Serviço de validação (RMI)
 - **ValidationInterface** (Java) – API REST que acessa o RMI
-- **NotificationService** (.NET) – Consumo de mensagens (RabbitMQ)
+- **NotificationService** (.NET) – Consome do banco e envia para o exchange (RabbitMQ)
 - **RabbitMQ**
 - **SQL Server**
 
@@ -48,14 +48,13 @@ O projeto é executado de forma integrada utilizando **Docker Compose**.
 
 Para executar o projeto completo:
 
-- Docker
+- Docker Desktop
 - Docker Compose
-
-> Não é necessário instalar Java, .NET, RabbitMQ ou SQL Server localmente.
 
 ---
 
 ## Como Executar o Projeto
+
 
 Na **raiz do projeto**, onde está o arquivo `docker-compose.yml`, execute:
 
